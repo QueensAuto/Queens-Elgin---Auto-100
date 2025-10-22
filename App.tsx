@@ -45,7 +45,7 @@ const useTranslations = () => {
 
 // Component Definitions
 const BackgroundBlobs: FC = () => (
-    <div className="fixed inset-0 z-0 overflow-hidden">
+    <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10" style={{ animation: 'blob-anim 15s infinite alternate' }}></div>
         <div className="absolute top-40 right-10 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10" style={{ animation: 'blob-anim 20s infinite alternate-reverse' }}></div>
         <div className="absolute -bottom-20 left-1/3 w-80 h-80 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10" style={{ animation: 'blob-anim 25s infinite alternate' }}></div>
@@ -227,6 +227,11 @@ const ScaleSection: FC<{t: TFunction, onDetailsClick: () => void}> = ({ t, onDet
     
     const savings = calculateSavings(cost);
     const finalCost = cost - savings;
+    
+    const min = 100;
+    const max = 1000;
+    const progress = ((cost - min) / (max - min)) * 100;
+    const sliderStyle = { '--progress': `${progress}%` } as React.CSSProperties;
 
     return (
         <section id="scale-section" className="py-8">
@@ -234,7 +239,18 @@ const ScaleSection: FC<{t: TFunction, onDetailsClick: () => void}> = ({ t, onDet
                 <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-white mb-4" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}><span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Your Repair Savings</span> Scale</h2>
                 <p className="text-lg text-slate-300 mb-10">{t('dragSlider')}</p>
                 <div className="max-w-2xl mx-auto bg-slate-900/30 border border-slate-700 rounded-2xl p-6 sm:p-8 shadow-lg">
-                    <input type="range" id="cost-slider" min="100" max="1000" value={cost} step="1" className="w-full" onChange={(e) => setCost(parseInt(e.target.value))} />
+                    <input
+                        type="range"
+                        id="cost-slider"
+                        aria-label="Repair Cost Slider"
+                        min={min}
+                        max={max}
+                        value={cost}
+                        step="1"
+                        className="w-full"
+                        style={sliderStyle}
+                        onChange={(e) => setCost(parseInt(e.target.value))}
+                    />
                     <div className="flex justify-between text-xs text-slate-400 mt-2 px-2"><span>$100</span><span>$500</span><span>$700+</span></div>
                     <div className="mt-8 grid grid-cols-3 gap-4 text-center">
                         <div><p className="text-sm text-slate-400">{t('repairCost')}</p><p className="text-xl sm:text-2xl font-bold text-white">${cost}</p></div>
@@ -490,6 +506,37 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
     const [calendarDate, setCalendarDate] = useState(new Date());
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    useEffect(() => {
+        const getCookie = (name: string) => {
+            const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+            return match ? match[2] : '';
+        };
+
+        const params = new URLSearchParams(window.location.search);
+        const trackingData: { [key: string]: string | undefined } = {};
+        
+        const gaCookie = getCookie('_ga');
+        trackingData.ga_client_id = gaCookie ? gaCookie.split('.').slice(2).join('.') : undefined;
+        trackingData.gclid = params.get('gclid') || getCookie('_gcl_au') || undefined;
+        trackingData.fbc = params.get('fbclid') || getCookie('_fbc') || undefined;
+        if (params.has('fbclid')) trackingData.fbclid = params.get('fbclid')!;
+        if (params.has('msclkid')) trackingData.msclkid = params.get('msclkid')!;
+        trackingData.referrer = document.referrer;
+
+        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(f => {
+            if (params.has(f)) {
+                trackingData[f] = params.get(f)!;
+            }
+        });
+        
+        const definedTrackingData = Object.fromEntries(
+            Object.entries(trackingData).filter(([, v]) => v !== undefined && v !== null && v !== '')
+        );
+
+        setFormData(prev => ({ ...prev, ...definedTrackingData }));
+    }, []);
+
+
     const validationRules: { [key: string]: (value: string) => boolean } = {
         'first-name': (value) => value.trim().length >= 2,
         'last-name': (value) => value.trim().length >= 2,
@@ -519,22 +566,56 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
+        if (!isStep2Valid) return;
         setIsSubmitting(true);
-        // In a real app, populate these fields properly.
-        const trackingData = {
-          event_name: 'generate_lead',
-          pageVariant: "save_100_v1_full_dark",
+
+        const uniqueEventId = window.dataLayer?.find((item: any) => item.uniqueEventId)?.uniqueEventId || `gen_${Date.now()}`;
+        const formattedPhone = `+1${(formData['mobile-number'] || '').replace(/\D/g, '')}`;
+        const lang = localStorage.getItem('preferredLanguage') || 'en';
+
+        const webhookData = {
+            ...formData,
+            event_id: uniqueEventId,
+            event_name: 'generate_lead',
+            phone: formattedPhone,
+            userLanguage: lang,
+            pageVariant: "save_100_v1_full_dark",
+            // Duplicate keys for thank you page
+            'first_name': formData['first-name'],
+            'last_name': formData['last-name'],
+            'carYear': formData['vehicle-year'],
+            'carMake': formData['vehicle-make'],
+            'carModel': formData['vehicle-model']
         };
-        const payload = { ...formData, ...trackingData };
-        
-        // This is a mock submission. Replace with actual API call.
-        console.log("Submitting:", payload);
-        await new Promise(res => setTimeout(res, 1500));
-        
-        // Redirect to a thank you page
-        alert("Booking submitted successfully! (This is a demo)");
-        // window.location.href = '/thank-you';
-        setIsSubmitting(false);
+
+        try {
+            const response = await fetch('https://n8n.queensautoservices.com/webhook-test/550c79ed-d8a9-4f0f-a2f7-0c82cfbb9f08', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(webhookData),
+            });
+
+            if (response.ok) {
+                const responseData = await response.json();
+                if (responseData?.audioUrl) sessionStorage.setItem('customAudioUrl', responseData.audioUrl);
+                if (responseData?.couponCode) sessionStorage.setItem('userCouponCode', responseData.couponCode);
+            }
+        } catch (error) {
+            console.error('Webhook Fetch Error:', error);
+            // The original script redirects even on failure, so we'll do the same.
+        } finally {
+            const thankYouUrl = new URL('https://queensautoserviceselgin.com/auto-repair/thank-you-coupon.htm');
+            
+            const validWebhookData = Object.fromEntries(
+                Object.entries(webhookData).filter(([, v]) => v)
+            );
+
+            for (const key in validWebhookData) {
+                thankYouUrl.searchParams.append(key, validWebhookData[key as keyof typeof validWebhookData] as string);
+            }
+            
+            window.location.href = thankYouUrl.toString();
+        }
     };
 
     const currentYear = new Date().getFullYear() + 1;
@@ -574,7 +655,7 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
                                     </div>
                                 </div>
                                 <div className="mt-8 text-center">
-                                    <button type="button" onClick={goToNextStep} disabled={!isStep1Valid} className="w-full cta-button inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed">{t('nextButton')}</button>
+                                    <button type="button" onClick={goToNextStep} disabled={!isStep1Valid} className="w-full cta-button inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed" dangerouslySetInnerHTML={{ __html: t('nextButton') }} />
                                     <p className="mt-2 text-xs text-slate-400">{t('ctaUrgency')}</p>
                                 </div>
                             </div>
@@ -593,7 +674,7 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
                                 </div>
                                 <div className="mt-8 text-center">
                                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                                        <button type="button" onClick={goToPrevStep} className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-slate-300 rounded-full hover:bg-slate-800 transition-colors">{t('backButton')}</button>
+                                        <button type="button" onClick={goToPrevStep} className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-slate-300 rounded-full hover:bg-slate-800 transition-colors" dangerouslySetInnerHTML={{ __html: t('backButton') }} />
                                         <button type="submit" disabled={!isStep2Valid || isSubmitting} className="w-full sm:w-auto cta-button inline-flex items-center justify-center px-8 py-4 text-xl font-bold text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed">
                                             {isSubmitting ? (
                                                 <><svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>{t('bookingSuccess')}</>
@@ -649,14 +730,23 @@ const Calendar: FC<{ t: TFunction, currentDate: Date, onDateChange: (date: Date)
         const dayDate = new Date(year, month, i);
         const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
         let classes = "calendar-day";
-        if (dayDate < today || dayDate.getDay() === 0) classes += " disabled";
+        const isDisabled = dayDate < today || dayDate.getDay() === 0;
+        if (isDisabled) classes += " disabled";
         if (dayDate.getTime() === today.getTime()) classes += " today";
         if (selectedDate === formattedDate) classes += " selected";
 
         calendarDays.push(
-            <div key={i} className={classes} data-date={formattedDate} onClick={() => !classes.includes('disabled') && onDateSelect(formattedDate)}>
+            <button
+                type="button"
+                key={i}
+                className={classes}
+                data-date={formattedDate}
+                disabled={isDisabled}
+                onClick={() => onDateSelect(formattedDate)}
+                aria-label={`Select date ${monthYearText.split(' ')[0]} ${i}`}
+            >
                 {i}
-            </div>
+            </button>
         );
     }
     
