@@ -83,6 +83,17 @@ export const translations: Translations = {
         popupBonus5: "2-Year/24k Nationwide Warranty",
         popupCTAV2: "Claim My Repair Package →",
         bookingSuccess: "Booking...",
+
+        // Thank You Page
+        thankYouTitle: "Appointment Confirmed, {{name}}!",
+        playMessageFor: "Play a message for {{name}}",
+        yourCouponCodeIs: "Your coupon code is:",
+        copied: "Copied!",
+        confirmationText1: "Your spot is saved! We've sent a confirmation to your email and a text reminder to your phone.",
+        confirmationText2: "Your {{vehicle}} is all set for its service.",
+        playingAudio: "Playing...",
+        playAgain: "Play message again",
+
     },
     es: {
         bookNowNav: "Reservar Ahora",
@@ -165,6 +176,16 @@ export const translations: Translations = {
         popupBonus5: "Garantía Nacional de 2 Años/24k Millas",
         popupCTAV2: "Reclamar Mi Paquete →",
         bookingSuccess: "Reservando...",
+
+        // Thank You Page
+        thankYouTitle: "¡Cita Confirmada, {{name}}!",
+        playMessageFor: "Reproducir un mensaje para {{name}}",
+        yourCouponCodeIs: "Tu código de cupón es:",
+        copied: "¡Copiado!",
+        confirmationText1: "¡Tu lugar está reservado! Hemos enviado una confirmación a tu correo y un recordatorio a tu teléfono.",
+        confirmationText2: "Tu {{vehicle}} está listo para su servicio.",
+        playingAudio: "Reproduciendo...",
+        playAgain: "Reproducir de nuevo",
     }
 };
 

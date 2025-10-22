@@ -10,7 +10,8 @@ export interface Translations {
   es: TranslationSet;
 }
 
-export type TFunction = (key: string) => string;
+// FIX: Update TFunction type to allow for an optional replacements object.
+export type TFunction = (key: string, replacements?: { [key: string]: string }) => string;
 
 export interface Review {
   name: string;

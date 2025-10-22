@@ -11,6 +11,7 @@ declare global {
     };
     Wistia: any;
     dataLayer: any[];
+    confetti: (options: any) => void;
   }
 }
 
@@ -36,8 +37,14 @@ const useTranslations = () => {
     }
   };
 
-  const t: TFunction = useCallback((key: string) => {
-    return translations[language][key] || translations.en[key] || key;
+  const t: TFunction = useCallback((key: string, replacements?: {[key: string]: string}) => {
+    let translation = translations[language][key] || translations.en[key] || key;
+    if (replacements) {
+        Object.keys(replacements).forEach(rKey => {
+            translation = translation.replace(`{{${rKey}}}`, replacements[rKey]);
+        });
+    }
+    return translation;
   }, [language]);
 
   return { language, setLanguage, t };
@@ -70,10 +77,11 @@ const ScrollProgressBar: FC = () => {
     return <div className="fixed top-0 left-0 h-[2px] bg-gradient-to-r from-cyan-400 to-purple-400 z-[60]" style={{ width: `${width}%` }} />;
 };
 
-const Header: FC<{ t: TFunction, language: Language, setLanguage: (lang: Language) => void }> = ({ t, language, setLanguage }) => {
+const Header: FC<{ t: TFunction, language: Language, setLanguage: (lang: Language) => void, showNav: boolean }> = ({ t, language, setLanguage, showNav }) => {
     const headerRef = useRef<HTMLElement>(null);
 
     useEffect(() => {
+        if (!showNav) return;
         let lastY = window.pageYOffset;
         const handleScroll = () => {
             const st = window.pageYOffset || document.documentElement.scrollTop;
@@ -88,13 +96,15 @@ const Header: FC<{ t: TFunction, language: Language, setLanguage: (lang: Languag
         };
         window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+    }, [showNav]);
+
+    const headerClasses = `fixed top-0 inset-x-0 z-50 ${showNav ? 'backdrop-blur-md border-b bg-black/70 border-white/5 transition-transform duration-300 will-change-transform' : ''}`;
 
     return (
-        <header ref={headerRef} className="fixed top-0 inset-x-0 z-50 backdrop-blur-md border-b bg-black/70 border-white/5 transition-transform duration-300 will-change-transform">
+        <header ref={headerRef} className={headerClasses}>
             <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16">
                 <div className="h-full flex items-center justify-between">
-                    <a href="#" className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-400 rounded-md">
+                    <a href="/" className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-400 rounded-md">
                         <img src="https://queensautoserviceselgin.com/wp-content/uploads/2024/11/Logo-White.webp" alt="Queens Auto Services Logo" className="h-10 w-auto" />
                     </a>
                     <div className="flex items-center gap-4">
@@ -103,7 +113,7 @@ const Header: FC<{ t: TFunction, language: Language, setLanguage: (lang: Languag
                             <span className="text-slate-500">|</span>
                             <button onClick={() => setLanguage('es')} className={`transition-colors hover:text-cyan-400 ${language === 'es' ? 'font-bold text-white' : 'text-slate-400'}`}>Spa</button>
                         </div>
-                        <a href="#book-appointment-form" className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm bg-gray-100 text-black hover:bg-gray-200 transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-cyan-400" dangerouslySetInnerHTML={{ __html: t('bookNowNav') }} />
+                        {showNav && <a href="#book-appointment-form" className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm bg-gray-100 text-black hover:bg-gray-200 transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-cyan-400" dangerouslySetInnerHTML={{ __html: t('bookNowNav') }} />}
                     </div>
                 </div>
             </nav>
@@ -111,8 +121,7 @@ const Header: FC<{ t: TFunction, language: Language, setLanguage: (lang: Languag
     );
 };
 
-
-const App: FC = () => {
+const LandingPage: FC = () => {
     const { language, setLanguage, t } = useTranslations();
     const [isDisclaimerModalOpen, setDisclaimerModalOpen] = useState(false);
     const [isExitPopupOpen, setExitPopupOpen] = useState(false);
@@ -125,9 +134,9 @@ const App: FC = () => {
 
     useEffect(() => {
         document.documentElement.lang = language;
+        document.title = 'Queens Auto Service — Instant Auto Repair Savings';
     }, [language]);
     
-    // Smooth scroll for anchor links
     useEffect(() => {
       const handleAnchorClick = (e: MouseEvent) => {
         const target = e.target as HTMLElement;
@@ -146,7 +155,6 @@ const App: FC = () => {
       return () => document.removeEventListener('click', handleAnchorClick);
     }, []);
     
-    // In a real app, you would use a more robust exit-intent library. This is a simple implementation.
     useEffect(() => {
         const handleMouseOut = (e: MouseEvent) => {
             if (e.clientY <= 0 && !sessionStorage.getItem('exitPopupShown')) {
@@ -160,9 +168,8 @@ const App: FC = () => {
 
     return (
         <div className="relative overflow-x-hidden">
-            <BackgroundBlobs />
             <ScrollProgressBar />
-            <Header t={t} language={language} setLanguage={setLanguage} />
+            <Header t={t} language={language} setLanguage={setLanguage} showNav={true} />
             
             <main>
                 <HeroSection t={t} language={language} />
@@ -186,8 +193,134 @@ const App: FC = () => {
     );
 };
 
+const App: FC = () => {
+    const path = window.location.pathname;
+    
+    return (
+      <>
+        <BackgroundBlobs />
+        {path.includes('/auto-repair/thank-you-coupon.htm') ? <ThankYouPage /> : <LandingPage />}
+      </>
+    );
+};
+
 // ... All other section components would be defined here, outside the main App component for performance.
 // For brevity and to fit within the response limits, some components are combined.
+const ThankYouPage: FC = () => {
+    const { language, setLanguage, t } = useTranslations();
+    const [name, setName] = useState('Guest');
+    const [vehicle, setVehicle] = useState('');
+    const [couponCode, setCouponCode] = useState('');
+    const [audioUrl, setAudioUrl] = useState('');
+    const [copied, setCopied] = useState(false);
+    const [audioStatus, setAudioStatus] = useState<'idle' | 'playing'>('idle');
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    useEffect(() => {
+        document.title = 'Appointment Confirmed!';
+        const params = new URLSearchParams(window.location.search);
+        const firstName = params.get('first_name');
+        if (firstName) setName(firstName);
+
+        const carYear = params.get('carYear');
+        const carMake = params.get('carMake');
+        const carModel = params.get('carModel');
+        if (carYear && carMake && carModel) {
+            setVehicle(`${carYear} ${carMake} ${carModel}`);
+        }
+
+        const storedCoupon = sessionStorage.getItem('userCouponCode');
+        if (storedCoupon) setCouponCode(storedCoupon);
+
+        const storedAudio = sessionStorage.getItem('customAudioUrl');
+        if (storedAudio) setAudioUrl(storedAudio);
+
+        if (window.confetti) {
+             const colors = ['#22d3ee', '#3b82f6', '#ffffff', '#a78bfa'];
+             window.confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 }, colors: colors });
+        }
+        
+    }, []);
+
+     useEffect(() => {
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    }, [copied]);
+
+    const handleCopy = () => {
+        if (couponCode) {
+            navigator.clipboard.writeText(couponCode);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    };
+    
+    const handlePlayAudio = () => {
+        if (audioUrl && !audioRef.current) {
+            audioRef.current = new Audio(audioUrl);
+            audioRef.current.onplay = () => setAudioStatus('playing');
+            audioRef.current.onended = () => {
+                setAudioStatus('idle');
+                audioRef.current = null;
+            };
+        }
+        audioRef.current?.play().catch(e => console.error("Audio playback failed", e));
+    };
+
+    const renderTitle = () => {
+        const titleParts = t('thankYouTitle', { name: '' }).split('{{name}}');
+        return (
+            <h1 className="mt-8 text-4xl md:text-5xl font-bold text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                {titleParts[0]}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">{name}</span>
+                {titleParts[1]}
+            </h1>
+        );
+    };
+
+    return (
+        <div className="relative z-10 min-h-screen flex flex-col">
+            <Header t={t} language={language} setLanguage={setLanguage} showNav={false} />
+            <main className="flex-grow flex items-center">
+                <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+                    <div className="w-24 h-24 mx-auto bg-green-500/10 border-2 border-green-500 rounded-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                    </div>
+                    
+                    {renderTitle()}
+
+                    {audioUrl && (
+                         <div className="mt-8">
+                            <button onClick={handlePlayAudio} disabled={audioStatus === 'playing'} className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-sky-400 to-indigo-500 text-white text-lg font-bold rounded-full shadow-lg shadow-sky-500/30 hover:shadow-sky-400/50 transition-all duration-300 transform hover:scale-105">
+                                <i data-lucide="play" className="w-6 h-6"></i>
+                                <span>
+                                    {audioStatus === 'playing' ? t('playingAudio') : (audioRef.current ? t('playAgain') : t('playMessageFor', { name }))}
+                                </span>
+                            </button>
+                        </div>
+                    )}
+                    
+                    {couponCode && (
+                        <div className="mt-8 p-6 bg-slate-900/50 rounded-lg max-w-sm mx-auto border-2 border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.25)]">
+                            <p className="text-base text-slate-300">{t('yourCouponCodeIs')}</p>
+                            <div className="flex items-center justify-center gap-3 mt-2">
+                                <p className="text-4xl font-bold text-cyan-300 tracking-widest">{couponCode}</p>
+                                <button onClick={handleCopy} className="p-2 bg-slate-700/50 rounded-lg text-slate-300 hover:text-white hover:bg-slate-600 transition-colors" aria-label="Copy coupon code">
+                                    <i data-lucide={copied ? "check" : "copy"} className={`w-5 h-5 ${copied ? 'text-green-400' : ''}`}></i>
+                                </button>
+                            </div>
+                           <p className={`text-sm text-green-400 h-5 mt-1 transition-opacity duration-300 ${copied ? 'opacity-100' : 'opacity-0'}`}>{t('copied')}</p>
+                        </div>
+                    )}
+
+                    <p className="mt-8 text-lg text-slate-300">{t('confirmationText1')}</p>
+                    {vehicle && <p className="mt-2 text-md text-slate-400">{t('confirmationText2', { vehicle })}</p>}
+                </div>
+            </main>
+        </div>
+    );
+};
 
 const HeroSection: FC<{ t: TFunction, language: Language }> = ({ t, language }) => (
     <section id="hero-section" className="relative text-center pt-28 pb-20 sm:pt-24 sm:pb-20 px-4">
@@ -604,7 +737,7 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
             console.error('Webhook Fetch Error:', error);
             // The original script redirects even on failure, so we'll do the same.
         } finally {
-            const thankYouUrl = new URL('https://queensautoserviceselgin.com/auto-repair/thank-you-coupon.htm');
+            const thankYouUrl = new URL(window.location.origin + '/auto-repair/thank-you-coupon.htm');
             
             const validWebhookData = Object.fromEntries(
                 Object.entries(webhookData).filter(([, v]) => v)
