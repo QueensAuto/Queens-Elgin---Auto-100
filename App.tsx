@@ -1,0 +1,717 @@
+
+import React, { useState, useEffect, useCallback, useRef, FC, ChangeEvent, FormEvent } from 'react';
+import { translations, testimonials, faqData, bonusData } from './constants';
+import type { Language, TFunction, Review, FormData, FormValidity } from './types';
+
+// TypeScript declarations for global libraries from scripts
+declare global {
+  interface Window {
+    lucide: {
+      createIcons: () => void;
+    };
+    Wistia: any;
+    dataLayer: any[];
+  }
+}
+
+// Reusable hook for translations
+const useTranslations = () => {
+  const [language, setLanguageState] = useState<Language>('en');
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem('preferredLanguage');
+    if (savedLang === 'en' || savedLang === 'es') {
+      setLanguageState(savedLang);
+    }
+  }, []);
+
+  const setLanguage = (lang: Language) => {
+    localStorage.setItem('preferredLanguage', lang);
+    setLanguageState(lang);
+    if (window.Wistia && window.Wistia.api) {
+        const enVideo = window.Wistia.api('a6i5ic59jv');
+        const esVideo = window.Wistia.api('u9od4mapw5');
+        if (lang === 'es' && enVideo) enVideo.pause();
+        if (lang === 'en' && esVideo) esVideo.pause();
+    }
+  };
+
+  const t: TFunction = useCallback((key: string) => {
+    return translations[language][key] || translations.en[key] || key;
+  }, [language]);
+
+  return { language, setLanguage, t };
+};
+
+// Component Definitions
+const BackgroundBlobs: FC = () => (
+    <div className="fixed inset-0 z-0 overflow-hidden">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10" style={{ animation: 'blob-anim 15s infinite alternate' }}></div>
+        <div className="absolute top-40 right-10 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10" style={{ animation: 'blob-anim 20s infinite alternate-reverse' }}></div>
+        <div className="absolute -bottom-20 left-1/3 w-80 h-80 bg-cyan-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10" style={{ animation: 'blob-anim 25s infinite alternate' }}></div>
+    </div>
+);
+
+const ScrollProgressBar: FC = () => {
+    const [width, setWidth] = useState(0);
+
+    const handleScroll = () => {
+        const h = document.documentElement;
+        const st = h.scrollTop || document.body.scrollTop;
+        const sh = h.scrollHeight - h.clientHeight;
+        setWidth(sh ? (st / sh) * 100 : 0);
+    };
+
+    useEffect(() => {
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    return <div className="fixed top-0 left-0 h-[2px] bg-gradient-to-r from-cyan-400 to-purple-400 z-[60]" style={{ width: `${width}%` }} />;
+};
+
+const Header: FC<{ t: TFunction, language: Language, setLanguage: (lang: Language) => void }> = ({ t, language, setLanguage }) => {
+    const headerRef = useRef<HTMLElement>(null);
+
+    useEffect(() => {
+        let lastY = window.pageYOffset;
+        const handleScroll = () => {
+            const st = window.pageYOffset || document.documentElement.scrollTop;
+            if (headerRef.current) {
+                if (st > lastY && st > 80) {
+                    headerRef.current.classList.add('-translate-y-full');
+                } else {
+                    headerRef.current.classList.remove('-translate-y-full');
+                }
+            }
+            lastY = st;
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    return (
+        <header ref={headerRef} className="fixed top-0 inset-x-0 z-50 backdrop-blur-md border-b bg-black/70 border-white/5 transition-transform duration-300 will-change-transform">
+            <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16">
+                <div className="h-full flex items-center justify-between">
+                    <a href="#" className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-400 rounded-md">
+                        <img src="https://queensautoserviceselgin.com/wp-content/uploads/2024/11/Logo-White.webp" alt="Queens Auto Services Logo" className="h-10 w-auto" />
+                    </a>
+                    <div className="flex items-center gap-4">
+                        <div className="text-sm">
+                            <button onClick={() => setLanguage('en')} className={`transition-colors hover:text-cyan-400 ${language === 'en' ? 'font-bold text-white' : 'text-slate-400'}`}>Eng</button>
+                            <span className="text-slate-500">|</span>
+                            <button onClick={() => setLanguage('es')} className={`transition-colors hover:text-cyan-400 ${language === 'es' ? 'font-bold text-white' : 'text-slate-400'}`}>Spa</button>
+                        </div>
+                        <a href="#book-appointment-form" className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm bg-gray-100 text-black hover:bg-gray-200 transition-all hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-cyan-400" dangerouslySetInnerHTML={{ __html: t('bookNowNav') }} />
+                    </div>
+                </div>
+            </nav>
+        </header>
+    );
+};
+
+
+const App: FC = () => {
+    const { language, setLanguage, t } = useTranslations();
+    const [isDisclaimerModalOpen, setDisclaimerModalOpen] = useState(false);
+    const [isExitPopupOpen, setExitPopupOpen] = useState(false);
+
+    useEffect(() => {
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    }, [language, isDisclaimerModalOpen, isExitPopupOpen]);
+
+    useEffect(() => {
+        document.documentElement.lang = language;
+    }, [language]);
+    
+    // Smooth scroll for anchor links
+    useEffect(() => {
+      const handleAnchorClick = (e: MouseEvent) => {
+        const target = e.target as HTMLElement;
+        const anchor = target.closest('a[href^="#"]');
+        if (anchor) {
+          const href = anchor.getAttribute('href');
+          if (href === '#' || href?.startsWith('#disclaimer-modal')) return;
+          e.preventDefault();
+          const targetEl = document.querySelector(href);
+          if (targetEl) {
+            targetEl.scrollIntoView({ behavior: 'smooth' });
+          }
+        }
+      };
+      document.addEventListener('click', handleAnchorClick);
+      return () => document.removeEventListener('click', handleAnchorClick);
+    }, []);
+    
+    // In a real app, you would use a more robust exit-intent library. This is a simple implementation.
+    useEffect(() => {
+        const handleMouseOut = (e: MouseEvent) => {
+            if (e.clientY <= 0 && !sessionStorage.getItem('exitPopupShown')) {
+                setExitPopupOpen(true);
+                sessionStorage.setItem('exitPopupShown', 'true');
+            }
+        };
+        document.addEventListener('mouseout', handleMouseOut);
+        return () => document.removeEventListener('mouseout', handleMouseOut);
+    }, []);
+
+    return (
+        <div className="relative overflow-x-hidden">
+            <BackgroundBlobs />
+            <ScrollProgressBar />
+            <Header t={t} language={language} setLanguage={setLanguage} />
+            
+            <main>
+                <HeroSection t={t} language={language} />
+                <ScaleSection t={t} onDetailsClick={() => setDisclaimerModalOpen(true)} />
+                <CouponSection t={t} />
+                <BonusSection t={t} />
+                <HowItWorksSection t={t} />
+                <BookingForm t={t} />
+                <TestimonialsSection t={t} />
+                <AboutSection t={t} />
+                <FAQSection t={t} />
+                <ServiceAreaSection t={t} />
+            </main>
+
+            <StickyCTA t={t} />
+            <Footer t={t} />
+            
+            <DisclaimerModal t={t} isOpen={isDisclaimerModalOpen} onClose={() => setDisclaimerModalOpen(false)} />
+            <ExitIntentPopup t={t} isOpen={isExitPopupOpen} onClose={() => setExitPopupOpen(false)} />
+        </div>
+    );
+};
+
+// ... All other section components would be defined here, outside the main App component for performance.
+// For brevity and to fit within the response limits, some components are combined.
+
+const HeroSection: FC<{ t: TFunction, language: Language }> = ({ t, language }) => (
+    <section id="hero-section" className="relative text-center pt-28 pb-20 sm:pt-24 sm:pb-20 px-4">
+        <div className="max-w-4xl mx-auto">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}><span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Save Up to $100</span> on Your Next Auto Repair</h1>
+            <p className="mt-6 text-lg text-slate-300 max-w-2xl mx-auto">{t('heroSubtitle')}</p>
+            <p className="mt-4 text-base text-cyan-400 font-semibold max-w-2xl mx-auto" dangerouslySetInnerHTML={{ __html: t('heroOffer') }} />
+
+            <div className="mt-12 max-w-3xl mx-auto rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border-2 border-slate-800">
+                <div className={language === 'en' ? '' : 'hidden'}>
+                    <wistia-player media-id="a6i5ic59jv" aspect="1.7777777777777777"></wistia-player>
+                </div>
+                <div className={language === 'es' ? '' : 'hidden'}>
+                    <wistia-player media-id="u9od4mapw5" aspect="1.7777777777777777"></wistia-player>
+                </div>
+            </div>
+
+            <div className="mt-12 text-center">
+                <a href="#book-appointment-form" className="cta-button inline-flex items-center justify-center h-14 px-10 rounded-full text-white text-lg font-bold w-full sm:w-auto">{t('heroCTA')}</a>
+                <p className="mt-2 text-xs text-slate-400">{t('ctaUrgency')}</p>
+            </div>
+        </div>
+    </section>
+);
+
+const ScaleSection: FC<{t: TFunction, onDetailsClick: () => void}> = ({ t, onDetailsClick }) => {
+    const [cost, setCost] = useState(450);
+    
+    const calculateSavings = (c: number) => {
+        if (c >= 700) return 100;
+        if (c >= 500) return 50;
+        if (c >= 300) return 40;
+        if (c >= 200) return 30;
+        if (c >= 100) return 15;
+        return 0;
+    };
+    
+    const savings = calculateSavings(cost);
+    const finalCost = cost - savings;
+
+    return (
+        <section id="scale-section" className="py-8">
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-white mb-4" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}><span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Your Repair Savings</span> Scale</h2>
+                <p className="text-lg text-slate-300 mb-10">{t('dragSlider')}</p>
+                <div className="max-w-2xl mx-auto bg-slate-900/30 border border-slate-700 rounded-2xl p-6 sm:p-8 shadow-lg">
+                    <input type="range" id="cost-slider" min="100" max="1000" value={cost} step="1" className="w-full" onChange={(e) => setCost(parseInt(e.target.value))} />
+                    <div className="flex justify-between text-xs text-slate-400 mt-2 px-2"><span>$100</span><span>$500</span><span>$700+</span></div>
+                    <div className="mt-8 grid grid-cols-3 gap-4 text-center">
+                        <div><p className="text-sm text-slate-400">{t('repairCost')}</p><p className="text-xl sm:text-2xl font-bold text-white">${cost}</p></div>
+                        <div><p className="text-sm text-slate-400">{t('youSave')}</p><p className="text-xl sm:text-2xl font-bold text-cyan-400">${savings}</p></div>
+                        <div><p className="text-sm text-slate-400">{t('finalCost')}</p><p className="text-xl sm:text-2xl font-bold text-white">${finalCost}</p></div>
+                    </div>
+                </div>
+                <p className="mt-4 text-xs text-slate-500">{t('oilChangeNote')}</p>
+                <button onClick={(e) => { e.preventDefault(); onDetailsClick(); }} className="mt-2 text-xs text-cyan-400 underline hover:text-cyan-300">{t('detailsApply')}</button>
+            </div>
+        </section>
+    );
+};
+
+const CouponSection: FC<{ t: TFunction }> = ({ t }) => (
+    <section className="py-24 px-4 bg-black-950/50 border-y border-slate-800">
+        <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-white mb-6" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{t('couponTitle')}</h2>
+            <p className="text-lg mb-8 text-slate-300 max-w-3xl mx-auto">{t('couponSubtitle')}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 mb-8 text-left text-slate-300 max-w-2xl mx-auto">
+                <ul className="space-y-3" style={{ listStyle: 'none', paddingLeft: 0 }} dangerouslySetInnerHTML={{ __html: t('couponList1') }} />
+                <ul className="space-y-3" style={{ listStyle: 'none', paddingLeft: 0 }} dangerouslySetInnerHTML={{ __html: t('couponList2') }} />
+            </div>
+            <p className="text-sm text-slate-400" dangerouslySetInnerHTML={{ __html: t('couponExclusions') }} />
+        </div>
+    </section>
+);
+
+const BonusSection: FC<{ t: TFunction }> = ({ t }) => (
+    <section className="py-24">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 className="text-4xl lg:text-5xl font-extrabold text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}><span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">{t('bonusStackTitle')}</span></h2>
+            <p className="mt-4 text-lg text-slate-300 max-w-2xl mx-auto">{t('bonusStackSubtitle')}</p>
+            <div className="mt-16">
+                <div className="flex flex-wrap items-stretch justify-center gap-8">
+                    {bonusData.map((bonus, index) => (
+                        <div key={index} className="bonus-card flex flex-col items-center p-8 text-center bg-black-950 border border-slate-900 rounded-2xl transition-all duration-300 hover:border-cyan-500 hover:-translate-y-2 w-full sm:w-[45%] lg:w-[30%]">
+                            <div className="icon-wrapper flex items-center justify-center w-16 h-16 rounded-full"><i data-lucide={bonus.icon} className="w-8 h-8"></i></div>
+                            <h3 className="text-xl font-bold text-white mt-6">{t(bonus.titleKey)}</h3>
+                            <p className="text-slate-400 mt-2">{t(bonus.descKey)}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+            <p className="mt-12 text-xs text-slate-500 max-w-2xl mx-auto leading-relaxed text-center">{t('bonusStackDisclaimer')}</p>
+        </div>
+    </section>
+);
+
+const HowItWorksSection: FC<{ t: TFunction }> = ({ t }) => (
+    <section id="how-it-works" className="py-24 px-4">
+        <div className="max-w-5xl mx-auto text-center">
+            <h2 className="text-4xl font-extrabold text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>How It Works — In 3 Easy Steps</h2>
+            <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="bg-slate-900/30 border border-slate-700 rounded-2xl p-8 flex flex-col items-center transition-all duration-300 hover:border-cyan-400 hover:-translate-y-2"><div className="flex items-center justify-center w-20 h-20 rounded-full bg-slate-800 border-2 border-slate-700 text-cyan-400 mb-4"><i data-lucide="calendar-plus" className="w-10 h-10"></i></div><h3 className="text-2xl font-bold text-white mt-6">{t('step1Title')}</h3><p className="text-slate-400 mt-2">{t('step1Desc')}</p></div>
+                <div className="bg-slate-900/30 border border-slate-700 rounded-2xl p-8 flex flex-col items-center transition-all duration-300 hover:border-cyan-400 hover:-translate-y-2"><div className="flex items-center justify-center w-20 h-20 rounded-full bg-slate-800 border-2 border-slate-700 text-cyan-400 mb-4"><i data-lucide="car-front" className="w-10 h-10"></i></div><h3 className="text-2xl font-bold text-white mt-6">{t('step2Title')}</h3><p className="text-slate-400 mt-2">{t('step2Desc')}</p></div>
+                <div className="bg-slate-900/30 border border-slate-700 rounded-2xl p-8 flex flex-col items-center transition-all duration-300 hover:border-cyan-400 hover:-translate-y-2"><div className="flex items-center justify-center w-20 h-20 rounded-full bg-slate-800 border-2 border-slate-700 text-cyan-400 mb-4"><i data-lucide="ticket-percent" className="w-10 h-10"></i></div><h3 className="text-2xl font-bold text-white mt-6">{t('step3Title')}</h3><p className="text-slate-400 mt-2">{t('step3Desc')}</p></div>
+            </div>
+        </div>
+    </section>
+);
+
+
+// Combined Sections for brevity
+const TestimonialsSection: FC<{ t: TFunction }> = ({ t }) => {
+    const [visibleCount, setVisibleCount] = useState(6);
+
+    const handleLoadMore = () => {
+        setVisibleCount(testimonials.length);
+    };
+
+    return (
+        <section className="py-24 px-4">
+            <div className="max-w-6xl mx-auto">
+                <h2 className="text-4xl font-extrabold text-center text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{t('testimonialsTitle')}</h2>
+                <p className="mt-4 max-w-2xl mx-auto text-lg text-center text-slate-400">{t('testimonialsSubtitle')}</p>
+                <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {testimonials.slice(0, visibleCount).map((review, index) => (
+                         <div key={index} className="group relative p-8 rounded-2xl border border-slate-800 bg-slate-900/50 hover:shadow-2xl hover:-translate-y-1 shadow-lg transition-all flex flex-col">
+                            <div className="absolute top-4 left-4 z-0"><svg width="45" height="36" className="fill-current text-cyan-400 opacity-10" viewBox="0 0 45 36"><path d="M13.5 0C6.04 0 0 6.04 0 13.5C0 20.96 6.04 27 13.5 27H18V36H9C4.03 36 0 31.97 0 27V25.65C0 22.77 1.17 20.04 3.26 17.96C5.34 15.87 8.07 14.7 10.95 14.7H13.5C16.8 14.7 19.8 12.15 20.25 8.85C20.25 8.85 20.25 8.55 20.25 8.55C20.25 3.83 16.42 0 11.7 0H13.5ZM40.5 0C33.04 0 27 6.04 27 13.5C27 20.96 33.04 27 40.5 27H45V36H36C31.03 36 27 31.97 27 27V25.65C27 22.77 28.17 20.04 30.26 17.96C32.34 15.87 35.07 14.7 37.95 14.7H40.5C43.8 14.7 46.8 12.15 47.25 8.85C47.25 8.85 47.25 8.55 47.25 8.55C47.25 3.83 43.42 0 38.7 0H40.5Z"/></svg></div>
+                            <div className="relative z-10 flex flex-col flex-grow">
+                                <p className="text-base text-slate-300 leading-relaxed testimonial-text flex-grow">{review.text}</p>
+                            </div>
+                            <div className="relative z-10 flex items-center mt-6 pt-6 border-t border-slate-800">
+                                <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-white text-lg font-bold mr-4">{review.name.split(" ").map((n)=>n[0]).join("")}</div>
+                                <div><h4 className="font-semibold text-white">{review.name}</h4><div className="text-yellow-400">★★★★★</div></div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                {visibleCount < testimonials.length && (
+                    <div className="mt-12 text-center">
+                        <button onClick={handleLoadMore} className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-3 bg-slate-700 text-white font-semibold rounded-full shadow-lg hover:bg-slate-600 focus:outline-none focus:ring-4 focus:ring-slate-500 focus:ring-opacity-50 transition-all duration-300">{t('loadMore')}</button>
+                    </div>
+                )}
+            </div>
+        </section>
+    );
+};
+
+const AboutSection: FC<{ t: TFunction }> = ({ t }) => (
+    <section className="py-16 px-4">
+        <div className="max-w-7xl mx-auto">
+            <div className="grid md:grid-cols-2 items-center gap-8 md:gap-12">
+                <div className="order-2 md:order-1 bg-white/5 backdrop-blur-lg p-8 md:p-12 rounded-2xl border border-white/10 shadow-2xl shadow-black/20">
+                    <p className="text-sm font-bold uppercase text-cyan-400">{t('aboutUs')}</p>
+                    <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-white mt-2" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{t('aboutTitle')}</h2>
+                    <p className="mt-4 text-slate-300">{t('aboutBody')}</p>
+                    <p className="mt-8 text-xs text-slate-400 italic">{t('aboutTagline')}</p>
+                </div>
+                <div className="order-1 md:order-2 relative">
+                    <img src="https://queensautoserviceselgin.com/wp-content/uploads/2025/09/Queens-Auto-Services-Elgin-Front-View-Shop-001.webp" alt="The exterior of Queens Auto Service shop in Elgin." className="rounded-2xl shadow-2xl w-full h-full object-cover" />
+                    <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent rounded-b-2xl">
+                        <p className="text-sm text-slate-200 font-semibold" dangerouslySetInnerHTML={{ __html: t('address') }}></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+);
+
+const FAQSection: FC<{ t: TFunction }> = ({ t }) => (
+    <section className="py-24 px-4">
+        <div className="max-w-4xl mx-auto">
+            <h2 className="text-3xl lg:text-4xl font-bold text-center text-white mb-10" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{t('faqTitle')}</h2>
+            <div className="space-y-4">
+                {faqData.map((faq, index) => (
+                    <details key={index} className="bg-slate-900/50 border border-slate-800 rounded-lg p-4 transition-all duration-300 hover:border-cyan-400/50">
+                        <summary className="flex justify-between items-center cursor-pointer font-semibold text-lg text-slate-100 list-none">
+                            <span>{t(faq.qKey)}</span>
+                            <i data-lucide="chevron-down" className="faq-icon w-5 h-5 transition-transform duration-300"></i>
+                        </summary>
+                        <div className="mt-4 text-slate-400">{t(faq.aKey)}</div>
+                    </details>
+                ))}
+            </div>
+        </div>
+    </section>
+);
+
+const ServiceAreaSection: FC<{ t: TFunction }> = ({ t }) => (
+    <section className="py-24 px-4">
+        <div className="max-w-5xl mx-auto text-center">
+            <h2 className="text-4xl font-extrabold text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{t('serviceAreaTitle')}</h2>
+            <p className="mt-4 text-lg text-slate-400">{t('serviceAreaSubtitle')}</p>
+            <div className="mt-12 rounded-2xl overflow-hidden border-4 border-slate-800 shadow-2xl"><img src="https://queensautoserviceselgin.com/wp-content/uploads/2025/08/Queens-Elgin-map.webp" alt="Map of Queens Auto Service service area in the greater Elgin area" className="w-full"/></div>
+            <p className="mt-6 text-sm text-slate-500">{t('serviceAreaList')}</p>
+        </div>
+    </section>
+);
+
+const StickyCTA: FC<{ t: TFunction }> = ({ t }) => {
+    const ctaRef = useRef<HTMLAnchorElement>(null);
+    useEffect(() => {
+        const sectionsToObserve = [
+            document.getElementById('hero-section'),
+            document.getElementById('scale-section'),
+            document.getElementById('book-appointment-form'),
+            document.querySelector('footer')
+        ].filter(Boolean);
+        
+        if (sectionsToObserve.length < 4 || !ctaRef.current) return;
+
+        const visibilityMap = new Map<Element, boolean>();
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => visibilityMap.set(entry.target, entry.isIntersecting));
+            const shouldShow = Array.from(visibilityMap.values()).every(v => !v);
+            
+            if (ctaRef.current) {
+                if (shouldShow) {
+                    ctaRef.current.classList.remove('opacity-0', 'translate-y-full');
+                } else {
+                    ctaRef.current.classList.add('opacity-0', 'translate-y-full');
+                }
+            }
+        }, { threshold: 0.1 });
+
+        sectionsToObserve.forEach(el => el && observer.observe(el));
+        return () => sectionsToObserve.forEach(el => el && observer.unobserve(el));
+    }, []);
+
+    return (
+        <div className="lg:hidden fixed bottom-6 left-0 right-0 z-40 flex justify-center pointer-events-none">
+            <a href="#book-appointment-form" ref={ctaRef} className="pointer-events-auto cta-button inline-flex items-center justify-center h-14 px-8 rounded-full text-white text-lg font-bold shadow-2xl shadow-cyan-500/50 opacity-0 translate-y-full transition-all duration-500 ease-in-out">
+                {t('heroCTA')}
+            </a>
+        </div>
+    );
+};
+
+const Footer: FC<{ t: TFunction }> = ({ t }) => (
+    <footer className="mt-20 py-10 border-t border-slate-800">
+        <div className="max-w-7xl mx-auto px-6 text-center text-sm text-slate-400">
+            <p>&copy; {new Date().getFullYear()} Queens Auto Service. All Rights Reserved. | <a href="https://queensautoserviceselgin.com/privacy-policy/" target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-cyan-400 transition-colors">{t('privacyPolicy')}</a> | <a href="https://queensautoserviceselgin.com/terms-of-use/" target="_blank" rel="noopener noreferrer" className="text-slate-300 hover:text-cyan-400 transition-colors">{t('termsOfUse')}</a></p>
+            <p className="mt-2">1303 Dundee Ave, Elgin, IL 60120</p>
+        </div>
+    </footer>
+);
+
+const DisclaimerModal: FC<{ t: TFunction, isOpen: boolean, onClose: () => void }> = ({ t, isOpen, onClose }) => {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 transition-opacity duration-300 opacity-100" onClick={onClose}>
+            <div className="relative max-w-lg w-full bg-slate-900 border border-white/10 rounded-2xl p-8 shadow-2xl shadow-black/50 transition-all duration-300 transform scale-100 opacity-100" onClick={e => e.stopPropagation()}>
+                <button onClick={onClose} className="absolute top-4 right-4 p-1 rounded-full text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"><i data-lucide="x" className="w-5 h-5"></i></button>
+                <h3 className="text-xl font-bold text-white mb-4">{t('modalTitle')}</h3>
+                <div className="text-sm text-slate-300 space-y-3">
+                    <p>{t('modalP1')}</p><p>{t('modalP2')}</p><p>{t('modalP3')}</p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const ExitIntentPopup: FC<{ t: TFunction, isOpen: boolean, onClose: () => void }> = ({ t, isOpen, onClose }) => {
+    if (!isOpen) return null;
+    
+    const handleCTAClick = () => {
+        onClose();
+        document.getElementById('book-appointment-form')?.scrollIntoView({behavior: 'smooth'});
+    };
+
+    return (
+        <div className="fixed inset-0 z-[101] flex items-center justify-center bg-black/50 p-4 transition-opacity duration-300 opacity-100" onClick={onClose}>
+            <div className="relative max-w-md w-full bg-slate-900/60 backdrop-blur-lg border border-white/10 rounded-2xl p-8 shadow-2xl shadow-black/50 text-center transition-all duration-300 scale-100 opacity-100" onClick={e => e.stopPropagation()}>
+                <button onClick={onClose} className="absolute top-3 right-3 text-slate-400 hover:text-white transition-colors" aria-label="Close"><i data-lucide="x" className="w-7 h-7"></i></button>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white text-center mb-4">{t('popupTitleV2')}</h2>
+                <p className="text-base sm:text-lg text-slate-300 text-center mb-6">{t('popupSubtitleV2')}</p>
+                <ul className="space-y-3 mb-6 text-slate-300 text-left max-w-md mx-auto">
+                    {['popupBonus1', 'popupBonus2', 'popupBonus3', 'popupBonus4', 'popupBonus5'].map(key => (
+                         <li key={key} className="flex items-start gap-3"><span className="text-cyan-400 text-xl flex-shrink-0">✅</span><span>{t(key)}</span></li>
+                    ))}
+                </ul>
+                <div className="flex justify-center"><button onClick={handleCTAClick} className="inline-flex items-center justify-center px-6 py-3 cta-button text-white font-bold rounded-full shadow-lg">{t('popupCTAV2')}</button></div>
+            </div>
+        </div>
+    );
+};
+
+// Booking Form Component with all logic
+const BookingForm: FC<{t: TFunction}> = ({ t }) => {
+    const [step, setStep] = useState(1);
+    const [formData, setFormData] = useState<FormData>({
+        'first-name': '', 'last-name': '', email: '', 'mobile-number': '',
+        'vehicle-year': '', 'vehicle-make': '', 'vehicle-model': '',
+        date: '', time: ''
+    });
+    const [validity, setValidity] = useState<FormValidity>({
+        'first-name': null, 'last-name': null, email: null, 'mobile-number': null,
+        'vehicle-make': null, 'vehicle-model': null
+    });
+    const [calendarDate, setCalendarDate] = useState(new Date());
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const validationRules: { [key: string]: (value: string) => boolean } = {
+        'first-name': (value) => value.trim().length >= 2,
+        'last-name': (value) => value.trim().length >= 2,
+        'email': (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+        'mobile-number': (value) => value.replace(/\D/g, '').length >= 10,
+        'vehicle-make': (value) => value.trim().length >= 2,
+        'vehicle-model': (value) => value.trim().length >= 1,
+    };
+
+    const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({...prev, [name]: value}));
+        if (validationRules[name]) {
+            setValidity(prev => ({ ...prev, [name]: validationRules[name](value) }));
+        }
+    };
+    
+    const isStep1Valid = Object.keys(validationRules).every(key => validity[key as keyof FormValidity] === true) && formData['vehicle-year'] !== '';
+    const isStep2Valid = formData.date !== '' && formData.time !== '';
+
+    const smoothScrollToForm = () => {
+      document.getElementById('form-container-wrapper')?.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    const goToNextStep = () => { setStep(2); smoothScrollToForm(); };
+    const goToPrevStep = () => { setStep(1); smoothScrollToForm(); };
+
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        // In a real app, populate these fields properly.
+        const trackingData = {
+          event_name: 'generate_lead',
+          pageVariant: "save_100_v1_full_dark",
+        };
+        const payload = { ...formData, ...trackingData };
+        
+        // This is a mock submission. Replace with actual API call.
+        console.log("Submitting:", payload);
+        await new Promise(res => setTimeout(res, 1500));
+        
+        // Redirect to a thank you page
+        alert("Booking submitted successfully! (This is a demo)");
+        // window.location.href = '/thank-you';
+        setIsSubmitting(false);
+    };
+
+    const currentYear = new Date().getFullYear() + 1;
+    const yearOptions = Array.from({length: currentYear - 1989}, (_, i) => currentYear - i);
+
+    return (
+        <section id="book-appointment-form" className="py-24 px-4">
+            <div id="form-container-wrapper" className="max-w-2xl mx-auto animated-gradient-border p-1">
+                <div className="bg-slate-950 shadow-inner shadow-black/20 rounded-[16px] p-6 sm:p-8 md:p-12">
+                    <div className="text-center">
+                        <h2 className="text-3xl lg:text-4xl font-bold tracking-tight text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}><span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Secure Your Spot</span> – Get Started Here</h2>
+                        <p className="mt-2 text-lg text-slate-300">{t(step === 1 ? 'formInstruction1' : 'formInstruction2')}</p>
+                    </div>
+                    <form onSubmit={handleSubmit} className="mt-8 relative min-h-[500px]">
+                        {step === 1 && (
+                            <div>
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <InputField name="first-name" label={t('firstName')} value={formData['first-name']} onChange={handleInputChange} isValid={validity['first-name']} placeholder="Enter first name" />
+                                        <InputField name="last-name" label={t('lastName')} value={formData['last-name']} onChange={handleInputChange} isValid={validity['last-name']} placeholder="Enter last name"/>
+                                        <InputField name="email" label={t('email')} type="email" value={formData.email} onChange={handleInputChange} isValid={validity.email} placeholder="you@example.com"/>
+                                        <InputField name="mobile-number" label={t('mobileNumber')} type="tel" value={formData['mobile-number']} onChange={handleInputChange} isValid={validity['mobile-number']} placeholder="(###) ###-####"/>
+                                    </div>
+                                    <div className="pt-2">
+                                        <h3 className="text-xl font-bold text-white mb-4">{t('vehicleDetails')}</h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                            <div>
+                                                <label htmlFor="vehicle-year" className="block text-sm font-medium text-slate-300 mb-1">{t('carYear')}</label>
+                                                <select id="vehicle-year" name="vehicle-year" value={formData['vehicle-year']} onChange={handleInputChange} required className="mt-1 block w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-md shadow-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-400 sm:text-sm">
+                                                    <option value="" disabled>Select Year</option>
+                                                    {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
+                                                </select>
+                                            </div>
+                                            <InputField name="vehicle-make" label={t('carMake')} value={formData['vehicle-make']} onChange={handleInputChange} isValid={validity['vehicle-make']} placeholder="e.g., Ford" />
+                                            <InputField name="vehicle-model" label={t('carModel')} value={formData['vehicle-model']} onChange={handleInputChange} isValid={validity['vehicle-model']} placeholder="e.g., F-150" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="mt-8 text-center">
+                                    <button type="button" onClick={goToNextStep} disabled={!isStep1Valid} className="w-full cta-button inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed">{t('nextButton')}</button>
+                                    <p className="mt-2 text-xs text-slate-400">{t('ctaUrgency')}</p>
+                                </div>
+                            </div>
+                        )}
+                        {step === 2 && (
+                             <div>
+                                <div className="space-y-8">
+                                    <Calendar
+                                        t={t}
+                                        currentDate={calendarDate}
+                                        onDateChange={setCalendarDate}
+                                        selectedDate={formData.date}
+                                        onDateSelect={(date) => setFormData(p => ({ ...p, date, time: '' }))}
+                                    />
+                                    {formData.date && <TimeSlots t={t} selectedDate={formData.date} selectedTime={formData.time} onTimeSelect={time => setFormData(p => ({...p, time}))}/> }
+                                </div>
+                                <div className="mt-8 text-center">
+                                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                        <button type="button" onClick={goToPrevStep} className="w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 text-lg font-bold text-slate-300 rounded-full hover:bg-slate-800 transition-colors">{t('backButton')}</button>
+                                        <button type="submit" disabled={!isStep2Valid || isSubmitting} className="w-full sm:w-auto cta-button inline-flex items-center justify-center px-8 py-4 text-xl font-bold text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed">
+                                            {isSubmitting ? (
+                                                <><svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>{t('bookingSuccess')}</>
+                                            ) : t('submitBtn')}
+                                        </button>
+                                    </div>
+                                    <p className="mt-2 text-xs text-slate-400">{t('ctaUrgency')}</p>
+                                </div>
+                            </div>
+                        )}
+                    </form>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+const InputField: FC<{ name: string, label: string, value: string, onChange: (e: ChangeEvent<HTMLInputElement>) => void, isValid: boolean | null, type?: string, placeholder?: string }> = ({ name, label, value, onChange, isValid, type = 'text', placeholder }) => {
+    const wrapperClasses = `input-wrapper ${isValid === true ? 'is-valid' : ''} ${isValid === false ? 'is-invalid' : ''}`;
+    const inputClasses = `input-field block w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-md shadow-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 sm:text-sm ${isValid === true ? 'is-valid' : ''} ${isValid === false ? 'is-invalid' : ''}`;
+    
+    return (
+        <div className={wrapperClasses}>
+            <label htmlFor={name} className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
+            <div className="relative mt-1">
+                <input type={type} id={name} name={name} required value={value} onChange={onChange} placeholder={placeholder} className={inputClasses}/>
+                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <svg className="validation-icon icon-valid h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path></svg>
+                    <svg className="validation-icon icon-invalid h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"></path></svg>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const Calendar: FC<{ t: TFunction, currentDate: Date, onDateChange: (date: Date) => void, selectedDate: string, onDateSelect: (date: string) => void }> = ({ t, currentDate, onDateChange, selectedDate, onDateSelect }) => {
+    const month = currentDate.getMonth();
+    const year = currentDate.getFullYear();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const lang = localStorage.getItem('preferredLanguage') || 'en';
+    const daysOfWeek = lang === 'es' ? ['D', 'L', 'M', 'M', 'J', 'V', 'S'] : ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    const monthYearText = new Intl.DateTimeFormat(lang, { month: "long", year: "numeric" }).format(currentDate);
+
+    const firstDayOfMonth = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const calendarDays = [];
+    for (let i = 0; i < firstDayOfMonth; i++) calendarDays.push(<div key={`empty-${i}`}></div>);
+
+    for (let i = 1; i <= daysInMonth; i++) {
+        const dayDate = new Date(year, month, i);
+        const formattedDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        let classes = "calendar-day";
+        if (dayDate < today || dayDate.getDay() === 0) classes += " disabled";
+        if (dayDate.getTime() === today.getTime()) classes += " today";
+        if (selectedDate === formattedDate) classes += " selected";
+
+        calendarDays.push(
+            <div key={i} className={classes} data-date={formattedDate} onClick={() => !classes.includes('disabled') && onDateSelect(formattedDate)}>
+                {i}
+            </div>
+        );
+    }
+    
+    return (
+        <div>
+            <h3 className="text-xl font-bold text-white mb-4">{t('whenBringIn')}</h3>
+            <div className="bg-slate-800/50 p-6 rounded-lg shadow-lg w-full">
+                <div className="flex items-center justify-between mb-6">
+                    <button type="button" onClick={() => onDateChange(new Date(year, month - 1, 1))} className="p-2 rounded-full hover:bg-slate-700 transition-colors"><i data-lucide="chevron-left" className="w-6 h-6 text-slate-400"></i></button>
+                    <h3 className="text-xl font-semibold text-white">{monthYearText}</h3>
+                    <button type="button" onClick={() => onDateChange(new Date(year, month + 1, 1))} className="p-2 rounded-full hover:bg-slate-700 transition-colors"><i data-lucide="chevron-right" className="w-6 h-6 text-slate-400"></i></button>
+                </div>
+                <div className="grid grid-cols-7 gap-1 text-center">{daysOfWeek.map((day, i) => <div key={i} className="font-semibold text-slate-400 text-xs py-2 text-center">{day}</div>)}</div>
+                <div className="grid grid-cols-7 gap-2 text-center mt-2">{calendarDays}</div>
+            </div>
+        </div>
+    );
+};
+
+const TimeSlots: FC<{ t: TFunction, selectedDate: string, selectedTime: string, onTimeSelect: (time: string) => void }> = ({ t, selectedDate, selectedTime, onTimeSelect }) => {
+    const date = new Date(selectedDate.replace(/-/g, '/'));
+    const dayOfWeek = date.getDay();
+    const availableTimes = dayOfWeek === 6 
+        ? ["08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM"]
+        : ["08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM", "12:00 PM", "12:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM"];
+    
+    const now = new Date();
+    const validTimes = availableTimes.filter(time => {
+      const [hourStr, minStr, period] = time.match(/(\d+):(\d+)\s(AM|PM)/)!.slice(1);
+      let hours = parseInt(hourStr);
+      if (period === 'PM' && hours < 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+      const timeSlotDate = new Date(date);
+      timeSlotDate.setHours(hours, parseInt(minStr), 0, 0);
+      return timeSlotDate > now;
+    });
+
+    return (
+        <div className="mt-8">
+            <h4 className="text-lg font-semibold text-white mb-4">{t('availableTimes')}</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {validTimes.length > 0 ? validTimes.map(time => (
+                    <button
+                        key={time}
+                        type="button"
+                        className={`time-slot p-2 border border-slate-600 rounded-md text-slate-200 transition-colors duration-200 hover:bg-slate-700 ${selectedTime === time ? 'selected' : ''}`}
+                        onClick={() => onTimeSelect(time)}
+                    >
+                        {time}
+                    </button>
+                )) : <p className="text-slate-400 col-span-full text-center">All appointment times for today have passed.</p>}
+            </div>
+        </div>
+    );
+};
+
+
+export default App;
