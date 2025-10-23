@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useCallback, useRef, FC, ChangeEvent, FormEvent } from 'react';
 import { translations, testimonials, faqData, bonusData } from './constants';
 import type { Language, TFunction, Review, FormData, FormValidity } from './types';
@@ -8,8 +9,8 @@ import type { Language, TFunction, Review, FormData, FormValidity } from './type
 declare global {
   // Add JSX namespace to declare wistia-player custom element
   namespace JSX {
-    interface IntrinsicElements {
-      // FIX: Correctly type the wistia-player custom element to be recognized by TypeScript's JSX parser.
+    // FIX: Extend React's intrinsic elements to include the 'wistia-player' custom element without overwriting standard HTML element types. This resolves errors where properties like 'div', 'span', etc., were not found on JSX.IntrinsicElements.
+    interface IntrinsicElements extends React.JSX.IntrinsicElements {
       'wistia-player': React.HTMLAttributes<HTMLElement> & {
         'media-id'?: string;
         aspect?: string;
@@ -966,7 +967,7 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
         try {
             // Original fetch call is replaced by the mock to prevent CORS errors.
             /*
-            const response = await fetch('https://n8n.queensautoservices.com/webhook/550c79ed-d8a9-4f0f-a2f7-0c82cfbb9f08', {
+            const response = await fetch('https://n8n.queensautoservices.com/webhook/5be99bf2-b19b-49f7-82b3-431fb1748b27', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(webhookData),
