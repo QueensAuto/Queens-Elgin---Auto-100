@@ -9,7 +9,8 @@ declare global {
   namespace JSX {
     // FIX: The 'wistia-player' is a custom element. This declaration augments React's JSX namespace to include it, resolving TypeScript errors.
     interface IntrinsicElements {
-      'wistia-player': React.HTMLAttributes<HTMLElement> & {
+      // FIX: Correctly type the custom element by including React.ClassAttributes to provide 'key' and 'ref' properties, which are required for intrinsic elements in React.
+      'wistia-player': React.ClassAttributes<HTMLElement> & React.HTMLAttributes<HTMLElement> & {
         'media-id'?: string;
         aspect?: string;
       };
@@ -930,39 +931,36 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
         const uniqueEventId = window.dataLayer?.find((item: any) => item.uniqueEventId)?.uniqueEventId || `gen_${Date.now()}`;
         const formattedPhone = `+1${(formData['mobile-number'] || '').replace(/\D/g, '')}`;
         const lang = localStorage.getItem('preferredLanguage') || 'en';
-
+        
+        // This payload's structure now matches the one in the sample HTML file,
+        // ensuring variable names are consistent with the existing GTM setup.
         const dataLayerPayload = {
+            ...formData,
             event: 'generate_lead',
             event_id: uniqueEventId,
-            first_name: formData['first-name'],
-            last_name: formData['last-name'],
-            email: formData.email,
             phone: formattedPhone,
-            car_year: formData['vehicle-year'],
-            car_make: formData['vehicle-make'],
-            car_model: formData['vehicle-model'],
-            appointment_date: formData.date,
-            appointment_time: formData.time,
-            user_language: lang,
-            page_variant: "save_100_v1_full_dark",
+            userLanguage: lang,
+            pageVariant: "save_100_v1_full_dark",
+            // The sample file explicitly adds these camelCase keys, which are likely
+            // the variables configured in GTM.
+            carYear: formData['vehicle-year'],
+            carMake: formData['vehicle-make'],
+            carModel: formData['vehicle-model'],
+             // Also explicitly including these as per sample structure for redundancy.
+            'first_name': formData['first-name'],
+            'last_name': formData['last-name'],
         };
 
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push(dataLayerPayload);
-
+        
+        // The webhook payload uses event_name instead of event.
         const webhookData = {
-            ...formData,
-            event_id: uniqueEventId,
+            ...dataLayerPayload,
             event_name: 'generate_lead',
-            phone: formattedPhone,
-            userLanguage: lang,
-            pageVariant: "save_100_v1_full_dark",
-            'first_name': formData['first-name'],
-            'last_name': formData['last-name'],
-            'carYear': formData['vehicle-year'],
-            'carMake': formData['vehicle-make'],
-            'carModel': formData['vehicle-model']
         };
+        delete (webhookData as any).event;
+
 
         try {
             const response = await fetch('https://n8n.queensautoservices.com/webhook-test/5be99bf2-b19b-49f7-82b3-431fb1748b27', {
