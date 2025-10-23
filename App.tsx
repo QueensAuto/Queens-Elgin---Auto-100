@@ -966,7 +966,7 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
         try {
             // Original fetch call is replaced by the mock to prevent CORS errors.
             /*
-            const response = await fetch('https://n8n.queensautoservices.com/webhook-test/550c79ed-d8a9-4f0f-a2f7-0c82cfbb9f08', {
+            const response = await fetch('https://n8n.queensautoservices.com/webhook/550c79ed-d8a9-4f0f-a2f7-0c82cfbb9f08', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(webhookData),
