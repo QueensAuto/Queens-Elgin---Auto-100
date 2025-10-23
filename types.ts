@@ -10,45 +10,11 @@ export interface Translations {
   es: TranslationSet;
 }
 
-// FIX: Update TFunction type to allow for an optional replacements object.
 export type TFunction = (key: string, replacements?: { [key: string]: string }) => string;
 
 export interface Review {
   name: string;
   text: string;
-}
-
-export interface FormData {
-  'first-name': string;
-  'last-name': string;
-  email: string;
-  'mobile-number': string;
-  'vehicle-year': string;
-  'vehicle-make': string;
-  'vehicle-model': string;
-  date: string;
-  time: string;
-  utm_source?: string;
-  utm_medium?: string;
-  utm_campaign?: string;
-  utm_term?: string;
-  utm_content?: string;
-  ga_client_id?: string;
-  gclid?: string;
-  fbc?: string;
-  fbclid?: string;
-  msclkid?: string;
-  referrer?: string;
-  event_id?: string;
-}
-
-export interface FormValidity {
-  'first-name': boolean | null;
-  'last-name': boolean | null;
-  email: boolean | null;
-  'mobile-number': boolean | null;
-  'vehicle-make': boolean | null;
-  'vehicle-model': boolean | null;
 }
 
 export interface FaqItem {
@@ -61,3 +27,33 @@ export interface BonusItem {
     titleKey: string;
     descKey: string;
 }
+
+// Form data types for the new multi-step form
+export interface Step1FormData {
+    symptom: string;
+}
+export interface Step2FormData {
+    'first-name': string;
+    'last-name': string;
+    email: string;
+    'mobile-number': string;
+    'car-year': string;
+    'car-make': string;
+    'car-model': string;
+}
+export interface Step3FormData {
+    date: string;
+    time: string;
+}
+
+export type FormData = Step1FormData & Step2FormData & Step3FormData & {
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+  utm_term?: string;
+  utm_content?: string;
+  ga_client_id?: string;
+  gclid?: string;
+  fbc?: string;
+  event_id?: string;
+};
