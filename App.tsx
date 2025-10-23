@@ -1,6 +1,8 @@
 
 
 
+
+
 import React, { useState, useEffect, useCallback, useRef, FC, ChangeEvent, FormEvent } from 'react';
 import { translations, testimonials, faqData, bonusData } from './constants';
 import type { Language, TFunction, Review, FormData, FormValidity } from './types';
@@ -9,8 +11,8 @@ import type { Language, TFunction, Review, FormData, FormValidity } from './type
 declare global {
   // Add JSX namespace to declare wistia-player custom element
   namespace JSX {
-    // FIX: Extend React's intrinsic elements to include the 'wistia-player' custom element without overwriting standard HTML element types. This resolves errors where properties like 'div', 'span', etc., were not found on JSX.IntrinsicElements.
-    interface IntrinsicElements extends React.JSX.IntrinsicElements {
+    // FIX: Correctly augment the JSX.IntrinsicElements interface to include the 'wistia-player' custom element. This is done via declaration merging, which automatically adds the new element type without overwriting standard HTML element types.
+    interface IntrinsicElements {
       'wistia-player': React.HTMLAttributes<HTMLElement> & {
         'media-id'?: string;
         aspect?: string;
@@ -946,39 +948,20 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
             'carMake': formData['vehicle-make'],
             'carModel': formData['vehicle-model']
         };
-        
-        // MOCK API CALL to fix "Failed to fetch" errors.
-        // These errors often happen due to Cross-Origin (CORS) policies on external servers,
-        // which cannot be fixed from the frontend code. This simulation ensures the app's
-        // booking flow is fully functional for demonstration purposes.
-        const mockApiCall = new Promise<{ ok: boolean; json: () => Promise<any> }>((resolve) => {
-            setTimeout(() => {
-                console.log("Simulating API submission with data:", webhookData);
-                resolve({
-                    ok: true,
-                    json: () => Promise.resolve({
-                        audioUrl: 'https://cdn.pixabay.com/audio/2022/03/15/audio_73ed8d7aada.mp3', // Example audio URL
-                        couponCode: 'SAVE100'
-                    })
-                });
-            }, 1500); // Simulate network delay
-        });
 
         try {
-            // Original fetch call is replaced by the mock to prevent CORS errors.
-            /*
-            const response = await fetch('https://n8n.queensautoservices.com/webhook/5be99bf2-b19b-49f7-82b3-431fb1748b27', {
+            const response = await fetch('https://n8n.queensautoservices.com/webhook-test/5be99bf2-b19b-49f7-82b3-431fb1748b27', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(webhookData),
             });
-            */
-            const response = await mockApiCall;
 
             if (response.ok) {
                 const responseData = await response.json();
                 if (responseData?.audioUrl) sessionStorage.setItem('customAudioUrl', responseData.audioUrl);
                 if (responseData?.couponCode) sessionStorage.setItem('userCouponCode', responseData.couponCode);
+            } else {
+                console.error('Webhook response was not ok.', response.status, response.statusText);
             }
         } catch (error) {
             console.error('Webhook Fetch Error:', error);
