@@ -1,8 +1,4 @@
 
-
-
-
-
 import React, { useState, useEffect, useCallback, useRef, FC, ChangeEvent, FormEvent } from 'react';
 import { translations, testimonials, faqData, bonusData } from './constants';
 import type { Language, TFunction, Review, FormData, FormValidity } from './types';
@@ -11,7 +7,7 @@ import type { Language, TFunction, Review, FormData, FormValidity } from './type
 declare global {
   // Add JSX namespace to declare wistia-player custom element
   namespace JSX {
-    // FIX: Correctly augment the JSX.IntrinsicElements interface to include the 'wistia-player' custom element. This is done via declaration merging, which automatically adds the new element type without overwriting standard HTML element types.
+    // FIX: The 'wistia-player' is a custom element. This declaration augments React's JSX namespace to include it, resolving TypeScript errors.
     interface IntrinsicElements {
       'wistia-player': React.HTMLAttributes<HTMLElement> & {
         'media-id'?: string;
@@ -934,6 +930,25 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
         const uniqueEventId = window.dataLayer?.find((item: any) => item.uniqueEventId)?.uniqueEventId || `gen_${Date.now()}`;
         const formattedPhone = `+1${(formData['mobile-number'] || '').replace(/\D/g, '')}`;
         const lang = localStorage.getItem('preferredLanguage') || 'en';
+
+        const dataLayerPayload = {
+            event: 'generate_lead',
+            event_id: uniqueEventId,
+            first_name: formData['first-name'],
+            last_name: formData['last-name'],
+            email: formData.email,
+            phone: formattedPhone,
+            car_year: formData['vehicle-year'],
+            car_make: formData['vehicle-make'],
+            car_model: formData['vehicle-model'],
+            appointment_date: formData.date,
+            appointment_time: formData.time,
+            user_language: lang,
+            page_variant: "save_100_v1_full_dark",
+        };
+
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push(dataLayerPayload);
 
         const webhookData = {
             ...formData,
