@@ -5,12 +5,11 @@ import type { Language, TFunction, Review, FormData, FormValidity } from './type
 
 // TypeScript declarations for global libraries from scripts
 declare global {
-  // Add JSX namespace to declare wistia-player custom element
+  // FIX: The 'wistia-player' is a custom element. This declaration augments React's JSX namespace to include it, resolving TypeScript errors.
+  // It provides types for the element itself, its custom attributes, and essential React properties like 'key' and 'ref'.
   namespace JSX {
-    // FIX: The 'wistia-player' is a custom element. This declaration augments React's JSX namespace to include it, resolving TypeScript errors.
     interface IntrinsicElements {
-      // FIX: Correctly type the custom element by including React.ClassAttributes to provide 'key' and 'ref' properties, which are required for intrinsic elements in React.
-      'wistia-player': React.ClassAttributes<HTMLElement> & React.HTMLAttributes<HTMLElement> & {
+      'wistia-player': React.HTMLProps<HTMLElement> & {
         'media-id'?: string;
         aspect?: string;
       };
@@ -928,45 +927,64 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
         if (!isStep2Valid) return;
         setIsSubmitting(true);
 
-        const uniqueEventId = window.dataLayer?.find((item: any) => item.uniqueEventId)?.uniqueEventId || `gen_${Date.now()}`;
         const formattedPhone = `+1${(formData['mobile-number'] || '').replace(/\D/g, '')}`;
-        const lang = localStorage.getItem('preferredLanguage') || 'en';
-        
-        // This payload's structure now matches the one in the sample HTML file,
-        // ensuring variable names are consistent with the existing GTM setup.
-        const dataLayerPayload = {
-            ...formData,
-            event: 'generate_lead',
-            event_id: uniqueEventId,
-            phone: formattedPhone,
-            userLanguage: lang,
-            pageVariant: "save_100_v1_full_dark",
-            // The sample file explicitly adds these camelCase keys, which are likely
-            // the variables configured in GTM.
-            carYear: formData['vehicle-year'],
-            carMake: formData['vehicle-make'],
-            carModel: formData['vehicle-model'],
-             // Also explicitly including these as per sample structure for redundancy.
-            'first_name': formData['first-name'],
-            'last_name': formData['last-name'],
-        };
 
+        // 1. GTM Payload (as requested by user)
+        const dataLayerPayload = {
+            event: 'generate_lead',
+            currency: 'USD',
+            value: 45,
+            user_data: {
+                email: formData.email,
+                phone_number: formattedPhone,
+                address: {
+                    first_name: formData['first-name'],
+                    last_name: formData['last-name'],
+                },
+            },
+            service_details: {
+                lead_type: 'auto_repair_booking',
+                vehicle: `${formData['vehicle-year']} ${formData['vehicle-make']} ${formData['vehicle-model']}`,
+            }
+        };
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push(dataLayerPayload);
+
+        // 2. Webhook Payload (keep old data but use new structure)
+        const uniqueEventId = window.dataLayer?.find((item: any) => item.uniqueEventId)?.uniqueEventId || `gen_${Date.now()}`;
+        const lang = localStorage.getItem('preferredLanguage') || 'en';
         
-        // The webhook payload uses event_name instead of event.
         const webhookData = {
             ...dataLayerPayload,
             event_name: 'generate_lead',
+            event_id: uniqueEventId,
+            userLanguage: lang,
+            pageVariant: "save_100_v1_full_dark",
+            appointment_date: formData.date,
+            appointment_time: formData.time,
+            utm_source: formData.utm_source,
+            utm_medium: formData.utm_medium,
+            utm_campaign: formData.utm_campaign,
+            utm_term: formData.utm_term,
+            utm_content: formData.utm_content,
+            ga_client_id: formData.ga_client_id,
+            gclid: formData.gclid,
+            fbc: formData.fbc,
+            fbclid: formData.fbclid,
+            msclkid: formData.msclkid,
+            referrer: formData.referrer
         };
         delete (webhookData as any).event;
 
+        const cleanWebhookData = Object.fromEntries(
+            Object.entries(webhookData).filter(([, v]) => v != null && v !== '')
+        );
 
         try {
             const response = await fetch('https://n8n.queensautoservices.com/webhook-test/5be99bf2-b19b-49f7-82b3-431fb1748b27', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(webhookData),
+                body: JSON.stringify(cleanWebhookData),
             });
 
             if (response.ok) {
@@ -979,15 +997,22 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
         } catch (error) {
             console.error('Webhook Fetch Error:', error);
         } finally {
+            // 3. Thank You URL params (must be flat to not break thank you page)
             const thankYouUrl = new URL(window.location.origin + '/auto-repair/thank-you-coupon.htm');
             
-            const validWebhookData = Object.fromEntries(
-                Object.entries(webhookData).filter(([, v]) => v)
+            const validUrlParams = Object.fromEntries(
+                Object.entries(formData).filter(([, v]) => v)
             );
 
-            for (const key in validWebhookData) {
-                thankYouUrl.searchParams.append(key, validWebhookData[key as keyof typeof validWebhookData] as string);
+            for (const key in validUrlParams) {
+                thankYouUrl.searchParams.append(key, validUrlParams[key] as string);
             }
+            
+            // Explicitly set params expected by Thank You page to ensure compatibility
+            thankYouUrl.searchParams.set('carYear', formData['vehicle-year']);
+            thankYouUrl.searchParams.set('carMake', formData['vehicle-make']);
+            thankYouUrl.searchParams.set('carModel', formData['vehicle-model']);
+            thankYouUrl.searchParams.set('first_name', formData['first-name']);
             
             window.location.href = thankYouUrl.toString();
         }
