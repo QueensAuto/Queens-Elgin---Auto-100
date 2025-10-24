@@ -5,10 +5,10 @@ import type { Language, TFunction, Review, FormData, FormValidity } from './type
 
 // TypeScript declarations for global libraries from scripts
 declare global {
-  // FIX: Corrected the declaration of IntrinsicElements to properly augment JSX types instead of overwriting them. This fixes errors for all standard HTML elements not being recognized.
+  // FIX: The JSX IntrinsicElements interface was being overwritten. This is corrected to ensure it augments the existing definitions, restoring types for standard HTML elements.
   namespace JSX {
     interface IntrinsicElements {
-      'wistia-player': React.HTMLProps<HTMLElement> & {
+      'wistia-player': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
         'media-id'?: string;
         aspect?: string;
       };
@@ -935,9 +935,9 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
         e.preventDefault();
         if (!isStep2Valid) return;
         setIsSubmitting(true);
-
+    
         const formattedPhone = `+1${(formData['mobile-number'] || '').replace(/\D/g, '')}`;
-
+    
         // 1. GTM Payload (as requested by user)
         const dataLayerPayload = {
             event: 'generate_lead',
@@ -953,49 +953,56 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
             },
             service_details: {
                 lead_type: 'auto_repair_booking',
-                vehicle: `${formData['vehicle-year']} ${formData['vehicle-make']} ${formData['vehicle-model']}`,
+                vehicle: [formData['vehicle-year'], formData['vehicle-make'], formData['vehicle-model']].filter(Boolean).join(' '),
             }
         };
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push(dataLayerPayload);
-
-        // 2. Webhook Payload (keep old data but use new structure)
+    
+        // 2. Webhook Payload (updated to match expected flat structure)
         const uniqueEventId = window.dataLayer?.find((item: any) => item.uniqueEventId)?.uniqueEventId || `gen_${Date.now()}`;
         const lang = localStorage.getItem('preferredLanguage') || 'en';
         
-        const webhookData = {
-            ...dataLayerPayload,
-            event_name: 'generate_lead',
-            event_id: uniqueEventId,
-            userLanguage: lang,
-            pageVariant: "save_100_v1_full_dark",
-            appointment_date: formData.date,
-            appointment_time: formData.time,
-            utm_source: formData.utm_source,
-            utm_medium: formData.utm_medium,
-            utm_campaign: formData.utm_campaign,
-            utm_term: formData.utm_term,
-            utm_content: formData.utm_content,
-            ga_client_id: formData.ga_client_id,
-            gclid: formData.gclid,
-            fbc: formData.fbc,
-            fbclid: formData.fbclid,
-            msclkid: formData.msclkid,
-            referrer: formData.referrer
+        const webhookPayload = {
+            "First Name": formData['first-name'],
+            "Last Name": formData['last-name'],
+            "Full Name": `${formData['first-name']} ${formData['last-name']}`,
+            "Phone": formattedPhone,
+            "Email": formData.email,
+            "Car Make": formData['vehicle-make'],
+            "Car Model": formData['vehicle-model'],
+            "Car Year": formData['vehicle-year'],
+            "Vehicle": [formData['vehicle-year'], formData['vehicle-make'], formData['vehicle-model']].filter(Boolean).join(' '),
+            "Appointment Date": formData.date,
+            "Appointment Time": formData.time,
+            "UTM Source": formData.utm_source,
+            "UTM Medium": formData.utm_medium,
+            "UTM Campaign": formData.utm_campaign,
+            "UTM Term": formData.utm_term,
+            "UTM Content": formData.utm_content,
+            "GCLID": formData.gclid,
+            "FBCLID": formData.fbclid,
+            "MSCLKID": formData.msclkid,
+            "GA Client ID": formData.ga_client_id,
+            "FBC": formData.fbc,
+            "Referrer": formData.referrer,
+            "Page Variant": "save_100_v1_full_dark",
+            "User Language": lang,
+            "Event ID": uniqueEventId,
+            "Lead Type": "generate_lead"
         };
-        delete (webhookData as any).event;
-
-        const cleanWebhookData = Object.fromEntries(
-            Object.entries(webhookData).filter(([, v]) => v != null && v !== '')
+    
+        const cleanWebhookPayload = Object.fromEntries(
+            Object.entries(webhookPayload).filter(([, v]) => v != null && v !== '')
         );
-
+    
         try {
             const response = await fetch('https://n8n.queensautoservices.com/webhook-test/5be99bf2-b19b-49f7-82b3-431fb1748b27', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(cleanWebhookData),
+                body: JSON.stringify(cleanWebhookPayload),
             });
-
+    
             if (response.ok) {
                 const responseData = await response.json();
                 if (responseData?.audioUrl) sessionStorage.setItem('customAudioUrl', responseData.audioUrl);
@@ -1012,7 +1019,7 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
             const validUrlParams = Object.fromEntries(
                 Object.entries(formData).filter(([, v]) => v)
             );
-
+    
             for (const key in validUrlParams) {
                 thankYouUrl.searchParams.append(key, validUrlParams[key] as string);
             }
