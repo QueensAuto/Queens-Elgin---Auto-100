@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect, useCallback, useRef, FC, ChangeEvent, FormEvent } from 'react';
-import { translations, testimonials, faqData, bonusData } from './constants';
+import { translations, testimonials, faqData, bonusData } from './constants.js';
 import type { Language, TFunction, Review, FormData, FormValidity } from './types';
 
 // TypeScript declarations for global libraries from scripts
 declare global {
-  // FIX: The 'wistia-player' is a custom element. This declaration augments React's JSX namespace to include it, resolving TypeScript errors.
-  // It provides types for the element itself, its custom attributes, and essential React properties like 'key' and 'ref'.
+  // FIX: By extending React.JSX.IntrinsicElements, we add our custom 'wistia-player'
+  // without overwriting the standard HTML elements, fixing all related JSX type errors.
   namespace JSX {
-    interface IntrinsicElements {
+    interface IntrinsicElements extends React.JSX.IntrinsicElements {
       'wistia-player': React.HTMLProps<HTMLElement> & {
         'media-id'?: string;
         aspect?: string;
@@ -1092,5 +1092,4 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
     );
 };
 
-// FIX: Add default export for the App component to resolve the import error in index.tsx.
 export default App;
