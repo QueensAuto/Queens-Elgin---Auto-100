@@ -5,13 +5,16 @@ import type { Language, TFunction, Review, FormData, FormValidity } from './type
 
 // TypeScript declarations for global libraries from scripts
 declare global {
-  // FIX: The JSX IntrinsicElements interface was being overwritten. This is corrected to ensure it augments the existing definitions, restoring types for standard HTML elements.
+  // FIX: The JSX IntrinsicElements interface was being overwritten.
+  // This is corrected to ensure it augments the existing definitions, restoring types for standard HTML elements.
   namespace JSX {
     interface IntrinsicElements {
       'wistia-player': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
         'media-id'?: string;
         aspect?: string;
       };
+      // Re-adding standard HTML elements that were being overwritten
+      [elemName: string]: any;
     }
   }
   interface Window {
@@ -876,30 +879,56 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
     useEffect(() => {
         const getCookie = (name: string) => {
             const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-            return match ? match[2] : '';
+            return match ? match[2] : null;
         };
 
         const params = new URLSearchParams(window.location.search);
-        const trackingData: { [key: string]: string | undefined } = {};
-        
-        const gaCookie = getCookie('_ga');
-        trackingData.ga_client_id = gaCookie ? gaCookie.split('.').slice(2).join('.') : undefined;
-        trackingData.gclid = params.get('gclid') || getCookie('_gcl_au') || undefined;
-        trackingData.fbc = params.get('fbclid') || getCookie('_fbc') || undefined;
-        if (params.has('fbclid')) trackingData.fbclid = params.get('fbclid')!;
-        if (params.has('msclkid')) trackingData.msclkid = params.get('msclkid')!;
-        trackingData.referrer = document.referrer;
+        const trackingKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
 
-        ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'].forEach(f => {
-            if (params.has(f)) {
-                trackingData[f] = params.get(f)!;
+        // Persist URL params to sessionStorage to retain them across navigation.
+        trackingKeys.forEach(key => {
+            if (params.has(key)) {
+                sessionStorage.setItem(key, params.get(key)!);
             }
         });
-        
-        const definedTrackingData = Object.fromEntries(
-            Object.entries(trackingData).filter(([, v]) => v !== undefined && v !== null && v !== '')
-        );
 
+        // Persist referrer on first touch to capture the original entry point.
+        if (document.referrer && !sessionStorage.getItem('referrer')) {
+            // Avoid storing self-referrals
+            if (!document.referrer.includes(window.location.hostname)) {
+                 sessionStorage.setItem('referrer', document.referrer);
+            }
+        }
+        
+        const trackingData: { [key: string]: string | undefined } = {};
+
+        // Retrieve tracking data, prioritizing URL params > sessionStorage.
+        trackingKeys.forEach(key => {
+            const value = params.get(key) || sessionStorage.getItem(key);
+            if (value) {
+                trackingData[key] = value;
+            }
+        });
+
+        // Handle special cases and cookies as fallbacks.
+        const gaCookie = getCookie('_ga');
+        trackingData.ga_client_id = gaCookie ? gaCookie.split('.').slice(2).join('.') : undefined;
+        
+        // Use GCLID from cookie if not in URL/session.
+        if (!trackingData.gclid) {
+            trackingData.gclid = getCookie('_gcl_au') || undefined;
+        }
+        
+        // FBC is from cookie only. FBCLID is from URL/session.
+        trackingData.fbc = getCookie('_fbc') || undefined; 
+        
+        // Retrieve persisted referrer.
+        trackingData.referrer = sessionStorage.getItem('referrer') || undefined;
+
+        const definedTrackingData = Object.fromEntries(
+            Object.entries(trackingData).filter(([, v]) => v != null && v !== '')
+        );
+        
         setFormData(prev => ({ ...prev, ...definedTrackingData }));
     }, []);
 
