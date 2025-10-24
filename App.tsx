@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect, useCallback, useRef, FC, ChangeEvent, FormEvent } from 'react';
 import { translations, testimonials, faqData, bonusData } from './constants.js';
 import type { Language, TFunction, Review, FormData, FormValidity } from './types';
@@ -9,8 +10,9 @@ import type { Language, TFunction, Review, FormData, FormValidity } from './type
 declare global {
   // Augment JSX's IntrinsicElements interface to include the custom 'wistia-player' element.
   namespace JSX {
-    // FIX: Correctly augmented the JSX.IntrinsicElements interface. The previous use of 'extends' was overwriting standard HTML element types.
-    // By using declaration merging, 'wistia-player' is added without removing built-in elements like 'div'.
+    // This uses declaration merging to add the 'wistia-player' custom element
+    // to the list of intrinsic elements for JSX. This allows using it in TSX
+    // without TypeScript errors.
     interface IntrinsicElements {
       'wistia-player': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
         'media-id'?: string;
@@ -1018,7 +1020,7 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push(dataLayerPayload);
     
-        // 2. Webhook Payload (updated to match expected flat structure)
+        // 2. Webhook Payload (updated to be consistent)
         const uniqueEventId = window.dataLayer?.find((item: any) => item.uniqueEventId)?.uniqueEventId || `gen_${Date.now()}`;
         const lang = localStorage.getItem('preferredLanguage') || 'en';
         
@@ -1034,32 +1036,28 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
             "Vehicle": [formData['vehicle-year'], formData['vehicle-make'], formData['vehicle-model']].filter(Boolean).join(' '),
             "Appointment Date": formData.date,
             "Appointment Time": formData.time,
-            "UTM Source": formData.utm_source,
-            "UTM Medium": formData.utm_medium,
-            "UTM Campaign": formData.utm_campaign,
-            "UTM Term": formData.utm_term,
-            "UTM Content": formData.utm_content,
-            "GCLID": formData.gclid,
-            "FBCLID": formData.fbclid,
-            "MSCLKID": formData.msclkid,
-            "GA Client ID": formData.ga_client_id,
-            "FBC": formData.fbc,
-            "Referrer": formData.referrer,
+            "UTM Source": formData.utm_source || "",
+            "UTM Medium": formData.utm_medium || "",
+            "UTM Campaign": formData.utm_campaign || "",
+            "UTM Term": formData.utm_term || "",
+            "UTM Content": formData.utm_content || "",
+            "GCLID": formData.gclid || "",
+            "FBCLID": formData.fbclid || "",
+            "MSCLKID": formData.msclkid || "",
+            "GA Client ID": formData.ga_client_id || "",
+            "FBC": formData.fbc || "",
+            "Referrer": formData.referrer || "",
             "Page Variant": "save_100_v1_full_dark",
             "User Language": lang,
             "Event ID": uniqueEventId,
             "Lead Type": "generate_lead"
         };
     
-        const cleanWebhookPayload = Object.fromEntries(
-            Object.entries(webhookPayload).filter(([, v]) => v != null && v !== '')
-        );
-    
         try {
             const response = await fetch('https://n8n.queensautoservices.com/webhook-test/5be99bf2-b19b-49f7-82b3-431fb1748b27', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(cleanWebhookPayload),
+                body: JSON.stringify(webhookPayload),
             });
     
             if (response.ok) {
