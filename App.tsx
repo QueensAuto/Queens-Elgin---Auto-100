@@ -1,20 +1,21 @@
 
+
+
 import React, { useState, useEffect, useCallback, useRef, FC, ChangeEvent, FormEvent } from 'react';
 import { translations, testimonials, faqData, bonusData } from './constants.js';
 import type { Language, TFunction, Review, FormData, FormValidity } from './types';
 
 // TypeScript declarations for global libraries from scripts
 declare global {
-  // FIX: The JSX IntrinsicElements interface was being overwritten.
-  // This is corrected to ensure it augments the existing definitions, restoring types for standard HTML elements.
+  // Augment JSX's IntrinsicElements interface to include the custom 'wistia-player' element.
   namespace JSX {
+    // FIX: Correctly augmented the JSX.IntrinsicElements interface. The previous use of 'extends' was overwriting standard HTML element types.
+    // By using declaration merging, 'wistia-player' is added without removing built-in elements like 'div'.
     interface IntrinsicElements {
       'wistia-player': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
         'media-id'?: string;
         aspect?: string;
       };
-      // Re-adding standard HTML elements that were being overwritten
-      [elemName: string]: any;
     }
   }
   interface Window {
@@ -715,7 +716,7 @@ const ExitIntentPopup: FC<{ t: TFunction, isOpen: boolean, onClose: () => void }
     );
 };
 
-const InputField: FC<{ name: string, label: string, value: string, onChange: (e: ChangeEvent<HTMLInputElement>) => void, isValid: boolean | null, type?: string, placeholder?: string }> = ({ name, label, value, onChange, isValid, type = 'text', placeholder }) => {
+const InputField: FC<{ name: string, label: string, value: string, onChange: (e: ChangeEvent<HTMLInputElement>) => void, isValid: boolean | null, type?: string, placeholder?: string, autoComplete?: string }> = ({ name, label, value, onChange, isValid, type = 'text', placeholder, autoComplete }) => {
     const wrapperClasses = `input-wrapper ${isValid === true ? 'is-valid' : ''} ${isValid === false ? 'is-invalid' : ''}`;
     const inputClasses = `input-field block w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-md shadow-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 sm:text-sm ${isValid === true ? 'is-valid' : ''} ${isValid === false ? 'is-invalid' : ''}`;
     
@@ -723,7 +724,7 @@ const InputField: FC<{ name: string, label: string, value: string, onChange: (e:
         <div className={wrapperClasses}>
             <label htmlFor={name} className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
             <div className="relative mt-1">
-                <input type={type} id={name} name={name} required value={value} onChange={onChange} placeholder={placeholder} className={inputClasses}/>
+                <input type={type} id={name} name={name} required value={value} onChange={onChange} placeholder={placeholder} className={inputClasses} autoComplete={autoComplete}/>
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                     <svg className="validation-icon icon-valid h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path></svg>
                     <svg className="validation-icon icon-invalid h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"></path></svg>
@@ -885,16 +886,13 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
         const params = new URLSearchParams(window.location.search);
         const trackingKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'gclid', 'fbclid', 'msclkid'];
 
-        // Persist URL params to sessionStorage to retain them across navigation.
         trackingKeys.forEach(key => {
             if (params.has(key)) {
                 sessionStorage.setItem(key, params.get(key)!);
             }
         });
 
-        // Persist referrer on first touch to capture the original entry point.
         if (document.referrer && !sessionStorage.getItem('referrer')) {
-            // Avoid storing self-referrals
             if (!document.referrer.includes(window.location.hostname)) {
                  sessionStorage.setItem('referrer', document.referrer);
             }
@@ -902,7 +900,7 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
         
         const trackingData: { [key: string]: string | undefined } = {};
 
-        // Retrieve tracking data, prioritizing URL params > sessionStorage.
+        // 1. Retrieve data from URL params or session storage
         trackingKeys.forEach(key => {
             const value = params.get(key) || sessionStorage.getItem(key);
             if (value) {
@@ -910,20 +908,52 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
             }
         });
 
-        // Handle special cases and cookies as fallbacks.
+        // 2. Retrieve data from cookies as fallbacks
         const gaCookie = getCookie('_ga');
         trackingData.ga_client_id = gaCookie ? gaCookie.split('.').slice(2).join('.') : undefined;
         
-        // Use GCLID from cookie if not in URL/session.
         if (!trackingData.gclid) {
             trackingData.gclid = getCookie('_gcl_au') || undefined;
         }
         
-        // FBC is from cookie only. FBCLID is from URL/session.
         trackingData.fbc = getCookie('_fbc') || undefined; 
-        
-        // Retrieve persisted referrer.
         trackingData.referrer = sessionStorage.getItem('referrer') || undefined;
+        
+        // 3. Infer missing UTMs from click IDs or referrer for robust tracking
+        if (!trackingData.utm_source) {
+            if (trackingData.gclid) {
+                trackingData.utm_source = 'google';
+            } else if (trackingData.fbclid) {
+                trackingData.utm_source = 'facebook';
+            } else if (trackingData.msclkid) {
+                trackingData.utm_source = 'bing';
+            } else if (trackingData.referrer) {
+                try {
+                    const referrerHost = new URL(trackingData.referrer).hostname.replace(/^www\./, '');
+                    if (referrerHost.includes('google')) trackingData.utm_source = 'google';
+                    else if (referrerHost.includes('facebook') || referrerHost.includes('fb.com')) trackingData.utm_source = 'facebook';
+                    else if (referrerHost.includes('bing')) trackingData.utm_source = 'bing';
+                    else trackingData.utm_source = referrerHost;
+                } catch (e) { /* Invalid referrer URL */ }
+            }
+        }
+
+        if (!trackingData.utm_medium) {
+            if (trackingData.gclid || trackingData.msclkid) {
+                trackingData.utm_medium = 'cpc';
+            } else if (trackingData.fbclid) {
+                trackingData.utm_medium = 'cpc';
+            } else if (trackingData.referrer) {
+                try {
+                    const referrerHost = new URL(trackingData.referrer).hostname;
+                    if (referrerHost.includes('google') || referrerHost.includes('bing') || referrerHost.includes('yahoo')) {
+                        trackingData.utm_medium = 'organic';
+                    } else if (referrerHost.includes('facebook') || referrerHost.includes('instagram') || referrerHost.includes('twitter')) {
+                        trackingData.utm_medium = 'social';
+                    }
+                } catch (e) { /* Invalid referrer URL */ }
+            }
+        }
 
         const definedTrackingData = Object.fromEntries(
             Object.entries(trackingData).filter(([, v]) => v != null && v !== '')
@@ -1079,10 +1109,10 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
                             <div>
                                 <div className="space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <InputField name="first-name" label={t('firstName')} value={formData['first-name']} onChange={handleInputChange} isValid={validity['first-name']} placeholder="Enter first name" />
-                                        <InputField name="last-name" label={t('lastName')} value={formData['last-name']} onChange={handleInputChange} isValid={validity['last-name']} placeholder="Enter last name"/>
-                                        <InputField name="email" label={t('email')} type="email" value={formData.email} onChange={handleInputChange} isValid={validity.email} placeholder="you@example.com"/>
-                                        <InputField name="mobile-number" label={t('mobileNumber')} type="tel" value={formData['mobile-number']} onChange={handleInputChange} isValid={validity['mobile-number']} placeholder="(###) ###-####"/>
+                                        <InputField name="first-name" label={t('firstName')} value={formData['first-name']} onChange={handleInputChange} isValid={validity['first-name']} placeholder="Enter first name" autoComplete="given-name" />
+                                        <InputField name="last-name" label={t('lastName')} value={formData['last-name']} onChange={handleInputChange} isValid={validity['last-name']} placeholder="Enter last name" autoComplete="family-name"/>
+                                        <InputField name="email" label={t('email')} type="email" value={formData.email} onChange={handleInputChange} isValid={validity.email} placeholder="you@example.com" autoComplete="email"/>
+                                        <InputField name="mobile-number" label={t('mobileNumber')} type="tel" value={formData['mobile-number']} onChange={handleInputChange} isValid={validity['mobile-number']} placeholder="(###) ###-####" autoComplete="tel"/>
                                     </div>
                                     <div className="pt-2">
                                         <h3 className="text-xl font-bold text-white mb-4">{t('vehicleDetails')}</h3>
