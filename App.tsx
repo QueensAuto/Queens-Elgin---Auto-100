@@ -5,10 +5,9 @@ import type { Language, TFunction, Review, FormData, FormValidity } from './type
 
 // TypeScript declarations for global libraries from scripts
 declare global {
-  // FIX: By extending React.JSX.IntrinsicElements, we add our custom 'wistia-player'
-  // without overwriting the standard HTML elements, fixing all related JSX type errors.
+  // FIX: Corrected the declaration of IntrinsicElements to properly augment JSX types instead of overwriting them. This fixes errors for all standard HTML elements not being recognized.
   namespace JSX {
-    interface IntrinsicElements extends React.JSX.IntrinsicElements {
+    interface IntrinsicElements {
       'wistia-player': React.HTMLProps<HTMLElement> & {
         'media-id'?: string;
         aspect?: string;
@@ -166,14 +165,24 @@ const LandingPage: FC = () => {
     }, []);
     
     useEffect(() => {
-        const handleMouseOut = (e: MouseEvent) => {
-            if (e.clientY <= 0 && !sessionStorage.getItem('exitPopupShown')) {
+        let canShowPopup = false;
+        const timeoutId = setTimeout(() => {
+            canShowPopup = true;
+        }, 500); // Prevent firing on page load
+
+        const handleMouseLeave = (e: MouseEvent) => {
+            if (canShowPopup && e.clientY <= 0 && !sessionStorage.getItem('exitPopupShown')) {
                 setExitPopupOpen(true);
                 sessionStorage.setItem('exitPopupShown', 'true');
             }
         };
-        document.addEventListener('mouseout', handleMouseOut);
-        return () => document.removeEventListener('mouseout', handleMouseOut);
+
+        document.documentElement.addEventListener('mouseleave', handleMouseLeave);
+
+        return () => {
+            clearTimeout(timeoutId);
+            document.documentElement.removeEventListener('mouseleave', handleMouseLeave);
+        };
     }, []);
 
     return (
