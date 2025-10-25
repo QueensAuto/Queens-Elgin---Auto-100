@@ -1054,7 +1054,7 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
         };
     
         try {
-            const response = await fetch('https://n8n.queensautoservices.com/webhook-test/5be99bf2-b19b-49f7-82b3-431fb1748b27', {
+            const response = await fetch('https://n8n.queensautoservices.com/webhook/5be99bf2-b19b-49f7-82b3-431fb1748b27', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(webhookPayload),
