@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState, useEffect, useCallback, useRef, FC, ChangeEvent, FormEvent } from 'react';
 import { translations, testimonials, faqData, bonusData } from './constants.js';
 import type { Language, TFunction, Review, FormData, FormValidity } from './types';
@@ -13,6 +10,9 @@ declare global {
     // This uses declaration merging to add the 'wistia-player' custom element
     // to the list of intrinsic elements for JSX. This allows using it in TSX
     // without TypeScript errors.
+    // FIX: Remove `extends React.JSX.IntrinsicElements` to allow standard declaration
+    // merging for `IntrinsicElements`. The previous implementation was overwriting
+    // the standard HTML element types, causing widespread errors.
     interface IntrinsicElements {
       'wistia-player': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
         'media-id'?: string;
@@ -45,8 +45,8 @@ const useTranslations = () => {
     localStorage.setItem('preferredLanguage', lang);
     setLanguageState(lang);
     if (window.Wistia && window.Wistia.api) {
-        const enVideo = window.Wistia.api('a6i5ic59jv');
-        const esVideo = window.Wistia.api('u9od4mapw5');
+        const enVideo = window.Wistia.api('nkhoqvoaev');
+        const esVideo = window.Wistia.api('3fr9tu4fz9');
         if (lang === 'es' && enVideo) enVideo.pause();
         if (lang === 'en' && esVideo) esVideo.pause();
     }
@@ -413,10 +413,10 @@ const HeroSection: FC<{ t: TFunction, language: Language }> = ({ t, language }) 
 
             <div className="mt-12 max-w-3xl mx-auto rounded-2xl overflow-hidden shadow-2xl shadow-black/50 border-2 border-slate-800">
                 <div className={language === 'en' ? '' : 'hidden'}>
-                    <wistia-player media-id="a6i5ic59jv" aspect="1.7777777777777777"></wistia-player>
+                    <wistia-player media-id="nkhoqvoaev" aspect="1.7777777777777777"></wistia-player>
                 </div>
                 <div className={language === 'es' ? '' : 'hidden'}>
-                    <wistia-player media-id="u9od4mapw5" aspect="1.7777777777777777"></wistia-player>
+                    <wistia-player media-id="3fr9tu4fz9" aspect="1.7777777777777777"></wistia-player>
                 </div>
             </div>
 
@@ -950,7 +950,7 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
                     const referrerHost = new URL(trackingData.referrer).hostname;
                     if (referrerHost.includes('google') || referrerHost.includes('bing') || referrerHost.includes('yahoo')) {
                         trackingData.utm_medium = 'organic';
-                    } else if (referrerHost.includes('facebook') || referrerHost.includes('instagram') || referrerHost.includes('twitter')) {
+                    } else if (referrerHost.includes('instagram') || referrerHost.includes('twitter')) {
                         trackingData.utm_medium = 'social';
                     }
                 } catch (e) { /* Invalid referrer URL */ }
