@@ -6,20 +6,22 @@ import type { Language, TFunction, Review, FormData, FormValidity } from './type
 // TypeScript declarations for global libraries from scripts
 declare global {
   // Augment JSX's IntrinsicElements interface to include the custom 'wistia-player' element.
-  namespace JSX {
-    // This uses declaration merging to add the 'wistia-player' custom element
-    // to the list of intrinsic elements for JSX. This allows using it in TSX
-    // without TypeScript errors.
-    // FIX: Remove `extends React.JSX.IntrinsicElements` to allow standard declaration
-    // merging for `IntrinsicElements`. The previous implementation was overwriting
-    // the standard HTML element types, causing widespread errors.
-    interface IntrinsicElements {
-      'wistia-player': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
-        'media-id'?: string;
-        aspect?: string;
-      };
+        namespace JSX {
+        // This uses declaration merging to add the 'wistia-player' custom element
+        // to the list of intrinsic elements for JSX. This allows using it in TSX
+        // without TypeScript errors.
+        // Keep existing React JSX IntrinsicElements and extend them so standard
+        // HTML elements (img, div, etc.) remain available.
+        interface IntrinsicElements extends React.JSX.IntrinsicElements {
+            // Fallback index signature so standard HTML elements are accepted
+            // even if React's built-in types are not picked up by the compiler here.
+            [elemName: string]: any;
+            'wistia-player': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+                'media-id'?: string;
+                aspect?: string;
+            };
+        }
     }
-  }
   interface Window {
     lucide: {
       createIcons: () => void;
@@ -120,7 +122,7 @@ const Header: FC<{ t: TFunction, language: Language, setLanguage: (lang: Languag
             <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16">
                 <div className="h-full flex items-center justify-between">
                     <a href="/" className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-cyan-400 rounded-md">
-                        <img src="https://queensautoserviceselgin.com/wp-content/uploads/2024/11/Logo-White.webp" alt="Queens Auto Services Logo" className="h-10 w-auto" />
+                        <img src="https://storage.googleapis.com/queens-videos/Logo-White.webp" alt="Queens Auto Services Logo" className="h-10 w-auto" />
                     </a>
                     <div className="flex items-center gap-4">
                         <div className="text-sm">
@@ -589,7 +591,7 @@ const AboutSection: FC<{ t: TFunction }> = ({ t }) => (
                     <p className="mt-8 text-xs text-slate-400 italic">{t('aboutTagline')}</p>
                 </div>
                 <div className="order-1 md:order-2 relative">
-                    <img src="https://queensautoserviceselgin.com/wp-content/uploads/2025/09/Queens-Auto-Services-Elgin-Front-View-Shop-001.webp" alt="The exterior of Queens Auto Service shop in Elgin." className="rounded-2xl shadow-2xl w-full h-full object-cover" />
+                    <img src="https://storage.googleapis.com/queens-videos/Queens-Auto-Services-Elgin-Front-View-Shop-001.webp" alt="The exterior of Queens Auto Service shop in Elgin." className="rounded-2xl shadow-2xl w-full h-full object-cover" />
                     <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent rounded-b-2xl">
                         <p className="text-sm text-slate-200 font-semibold" dangerouslySetInnerHTML={{ __html: t('address') }}></p>
                     </div>
@@ -623,7 +625,7 @@ const ServiceAreaSection: FC<{ t: TFunction }> = ({ t }) => (
         <div className="max-w-5xl mx-auto text-center">
             <h2 className="text-4xl font-extrabold text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{t('serviceAreaTitle')}</h2>
             <p className="mt-4 text-lg text-slate-400">{t('serviceAreaSubtitle')}</p>
-            <div className="mt-12 rounded-2xl overflow-hidden border-4 border-slate-800 shadow-2xl"><img src="https://queensautoserviceselgin.com/wp-content/uploads/2025/08/Queens-Elgin-map.webp" alt="Map of Queens Auto Service service area in the greater Elgin area" className="w-full"/></div>
+            <div className="mt-12 rounded-2xl overflow-hidden border-4 border-slate-800 shadow-2xl"><img src="https://storage.googleapis.com/queens-videos/Queens-Elgin-map.webp" alt="Map of Queens Auto Service service area in the greater Elgin area" className="w-full"/></div>
             <p className="mt-6 text-sm text-slate-500">{t('serviceAreaList')}</p>
         </div>
     </section>
