@@ -1,3 +1,11 @@
-[[providers]]
-name = "node"
-version = "22"
+# Nixpacks configuration for Coolify deployment
+providers = ["node"]
+
+[phases.setup]
+nixPkgs = ["nodejs_22"]
+
+[phases.build]
+cmds = ["npm ci", "npm run build"]
+
+[start]
+cmd = "npx serve dist -s -l 3000"
