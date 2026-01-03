@@ -5,8 +5,8 @@ import type { Language, TFunction, Review, FormData, FormValidity } from './type
 
 // TypeScript declarations for global libraries from scripts
 declare global {
-  // Augment JSX's IntrinsicElements interface to include the custom 'wistia-player' element.
-        namespace JSX {
+    // Augment JSX's IntrinsicElements interface to include the custom 'wistia-player' element.
+    namespace JSX {
         // This uses declaration merging to add the 'wistia-player' custom element
         // to the list of intrinsic elements for JSX. This allows using it in TSX
         // without TypeScript errors.
@@ -22,49 +22,49 @@ declare global {
             };
         }
     }
-  interface Window {
-    lucide: {
-      createIcons: () => void;
-    };
-    Wistia: any;
-    dataLayer: any[];
-    confetti: (options: any) => void;
-  }
+    interface Window {
+        lucide: {
+            createIcons: () => void;
+        };
+        Wistia: any;
+        dataLayer: any[];
+        confetti: (options: any) => void;
+    }
 }
 
 // Reusable hook for translations
 const useTranslations = () => {
-  const [language, setLanguageState] = useState<Language>('en');
+    const [language, setLanguageState] = useState<Language>('en');
 
-  useEffect(() => {
-    const savedLang = localStorage.getItem('preferredLanguage');
-    if (savedLang === 'en' || savedLang === 'es') {
-      setLanguageState(savedLang);
-    }
-  }, []);
+    useEffect(() => {
+        const savedLang = localStorage.getItem('preferredLanguage');
+        if (savedLang === 'en' || savedLang === 'es') {
+            setLanguageState(savedLang);
+        }
+    }, []);
 
-  const setLanguage = (lang: Language) => {
-    localStorage.setItem('preferredLanguage', lang);
-    setLanguageState(lang);
-    if (window.Wistia && window.Wistia.api) {
-        const enVideo = window.Wistia.api('nkhoqvoaev');
-        const esVideo = window.Wistia.api('3fr9tu4fz9');
-        if (lang === 'es' && enVideo) enVideo.pause();
-        if (lang === 'en' && esVideo) esVideo.pause();
-    }
-  };
+    const setLanguage = (lang: Language) => {
+        localStorage.setItem('preferredLanguage', lang);
+        setLanguageState(lang);
+        if (window.Wistia && window.Wistia.api) {
+            const enVideo = window.Wistia.api('nkhoqvoaev');
+            const esVideo = window.Wistia.api('3fr9tu4fz9');
+            if (lang === 'es' && enVideo) enVideo.pause();
+            if (lang === 'en' && esVideo) esVideo.pause();
+        }
+    };
 
-  const t: TFunction = useCallback((key: string, replacements?: {[key: string]: string}) => {
-    let translation = translations[language][key] || translations.en[key] || key;
-    if (replacements) {
-        Object.keys(replacements).forEach(rKey => {
-            translation = translation.replace(`{{${rKey}}}`, replacements[rKey]);
-        });
-    }
-    return translation;
-  }, [language]);
+    const t: TFunction = useCallback((key: string, replacements?: { [key: string]: string }) => {
+        let translation = translations[language][key] || translations.en[key] || key;
+        if (replacements) {
+            Object.keys(replacements).forEach(rKey => {
+                translation = translation.replace(`{{${rKey}}}`, replacements[rKey]);
+            });
+        }
+        return translation;
+    }, [language]);
 
-  return { language, setLanguage, t };
+    return { language, setLanguage, t };
 };
 
 // Component Definitions
@@ -153,25 +153,25 @@ const LandingPage: FC = () => {
         document.documentElement.lang = language;
         document.title = 'Queens Auto Service — Instant Auto Repair Savings';
     }, [language]);
-    
+
     useEffect(() => {
-      const handleAnchorClick = (e: MouseEvent) => {
-        const target = e.target as HTMLElement;
-        const anchor = target.closest('a[href^="#"]');
-        if (anchor) {
-          const href = anchor.getAttribute('href');
-          if (href === '#' || href?.startsWith('#disclaimer-modal')) return;
-          e.preventDefault();
-          const targetEl = document.querySelector(href);
-          if (targetEl) {
-            targetEl.scrollIntoView({ behavior: 'smooth' });
-          }
-        }
-      };
-      document.addEventListener('click', handleAnchorClick);
-      return () => document.removeEventListener('click', handleAnchorClick);
+        const handleAnchorClick = (e: MouseEvent) => {
+            const target = e.target as HTMLElement;
+            const anchor = target.closest('a[href^="#"]');
+            if (anchor) {
+                const href = anchor.getAttribute('href');
+                if (href === '#' || href?.startsWith('#disclaimer-modal')) return;
+                e.preventDefault();
+                const targetEl = document.querySelector(href);
+                if (targetEl) {
+                    targetEl.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+        };
+        document.addEventListener('click', handleAnchorClick);
+        return () => document.removeEventListener('click', handleAnchorClick);
     }, []);
-    
+
     useEffect(() => {
         let canShowPopup = false;
         const timeoutId = setTimeout(() => {
@@ -197,7 +197,7 @@ const LandingPage: FC = () => {
         <div className="relative overflow-x-hidden">
             <ScrollProgressBar />
             <Header t={t} language={language} setLanguage={setLanguage} showNav={true} />
-            
+
             <main>
                 <HeroSection t={t} language={language} />
                 <ScaleSection t={t} onDetailsClick={() => setDisclaimerModalOpen(true)} />
@@ -213,7 +213,7 @@ const LandingPage: FC = () => {
 
             <StickyCTA t={t} />
             <Footer t={t} />
-            
+
             <DisclaimerModal t={t} isOpen={isDisclaimerModalOpen} onClose={() => setDisclaimerModalOpen(false)} />
             <ExitIntentPopup t={t} isOpen={isExitPopupOpen} onClose={() => setExitPopupOpen(false)} />
         </div>
@@ -222,12 +222,12 @@ const LandingPage: FC = () => {
 
 const App: FC = () => {
     const path = window.location.pathname;
-    
+
     return (
-      <>
-        <BackgroundBlobs />
-        {path.includes('/auto-repair/thank-you-coupon.htm') ? <ThankYouPage /> : <LandingPage />}
-      </>
+        <>
+            <BackgroundBlobs />
+            {path.includes('/auto-repair/thank-you-coupon.htm') ? <ThankYouPage /> : <LandingPage />}
+        </>
     );
 };
 
@@ -246,11 +246,11 @@ const ThankYouPage: FC = () => {
     useEffect(() => {
         document.title = 'Appointment Confirmed!';
         const params = new URLSearchParams(window.location.search);
-        
+
         setName(params.get('first_name') || 'Guest');
         setAppointmentDate(params.get('date') || '');
         setAppointmentTime(params.get('time') || '');
-        
+
         const carYear = params.get('carYear');
         const carMake = params.get('carMake');
         const carModel = params.get('carModel');
@@ -262,11 +262,11 @@ const ThankYouPage: FC = () => {
         setAudioUrl(sessionStorage.getItem('customAudioUrl') || '');
 
         if (window.confetti) {
-             const colors = ['#22d3ee', '#3b82f6', '#ffffff', '#a78bfa'];
-             window.confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 }, colors: colors });
+            const colors = ['#22d3ee', '#3b82f6', '#ffffff', '#a78bfa'];
+            window.confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 }, colors: colors });
         }
     }, []);
-    
+
     const formattedDate = useCallback(() => {
         if (!appointmentDate) return '';
         const date = new Date(appointmentDate.replace(/-/g, '/'));
@@ -274,7 +274,7 @@ const ThankYouPage: FC = () => {
         return new Intl.DateTimeFormat(language, options).format(date);
     }, [appointmentDate, language]);
 
-     useEffect(() => {
+    useEffect(() => {
         if (window.lucide) {
             window.lucide.createIcons();
         }
@@ -287,7 +287,7 @@ const ThankYouPage: FC = () => {
             setTimeout(() => setCopied(false), 2000);
         }
     };
-    
+
     const handlePlayAudio = () => {
         if (audioUrl && !audioRef.current) {
             audioRef.current = new Audio(audioUrl);
@@ -317,13 +317,13 @@ const ThankYouPage: FC = () => {
             <main className="flex-grow flex items-center">
                 <div className="max-w-xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
                     <div className="w-24 h-24 mx-auto bg-green-500/10 border-2 border-green-500 rounded-full flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
                     </div>
-                    
+
                     {renderTitle()}
 
                     {audioUrl && (
-                         <div className="mt-8">
+                        <div className="mt-8">
                             <button onClick={handlePlayAudio} disabled={audioStatus === 'playing'} className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-sky-400 to-indigo-500 text-white text-lg font-bold rounded-full shadow-lg shadow-sky-500/30 hover:shadow-sky-400/50 transition-all duration-300 transform hover:scale-105">
                                 <i data-lucide="play" className="w-6 h-6"></i>
                                 <span>
@@ -332,7 +332,7 @@ const ThankYouPage: FC = () => {
                             </button>
                         </div>
                     )}
-                    
+
                     {couponCode && (
                         <div className="mt-8 p-6 bg-slate-900/50 rounded-lg max-w-sm mx-auto border-2 border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.25)]">
                             <p className="text-base text-slate-300">{t('yourCouponCodeIs')}</p>
@@ -342,7 +342,7 @@ const ThankYouPage: FC = () => {
                                     <i data-lucide={copied ? "check" : "copy"} className={`w-5 h-5 ${copied ? 'text-green-400' : ''}`}></i>
                                 </button>
                             </div>
-                           <p className={`text-sm text-green-400 h-5 mt-1 transition-opacity duration-300 ${copied ? 'opacity-100' : 'opacity-0'}`}>{t('copied')}</p>
+                            <p className={`text-sm text-green-400 h-5 mt-1 transition-opacity duration-300 ${copied ? 'opacity-100' : 'opacity-0'}`}>{t('copied')}</p>
                         </div>
                     )}
 
@@ -350,57 +350,57 @@ const ThankYouPage: FC = () => {
                     {vehicle && <p className="mt-2 text-md text-slate-400">{t('confirmationText2', { vehicle })}</p>}
                 </div>
             </main>
-            
-            <div className="w-full bg-slate-950/50 py-16">
-              <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
-                {appointmentDate && appointmentTime && (
-                  <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-6 text-left">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                      <div>
-                        <p className="text-sm text-slate-400">{t('serviceTitle')}</p>
-                        <p className="font-semibold text-white">{t('serviceValue')}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-slate-400">{t('dateTimeTitle')}</p>
-                        <p className="font-semibold text-white">{formattedDate()} at {appointmentTime}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-slate-400">{t('locationTitle')}</p>
-                        <p className="font-semibold text-white">{t('locationValue')}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-6 text-left">
-                  <h3 className="text-xl font-bold text-white mb-4">{t('whatHappensNextTitle')}</h3>
-                  <ol className="list-decimal list-inside space-y-2 text-slate-300">
-                    <li>{t('whatHappensNextStep1')}</li>
-                    <li>{t('whatHappensNextStep2')}</li>
-                    <li>{t('whatHappensNextStep3')}</li>
-                  </ol>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-6 text-center">
-                    <h4 className="font-bold text-white text-lg">{t('needToRescheduleTitle')}</h4>
-                    <p className="text-slate-400 mt-2 text-sm">{t('needToRescheduleBody')}</p>
-                    <a href="tel:2248363000" className="mt-4 inline-block px-6 py-2 border-2 border-white rounded-full text-white font-semibold hover:bg-white hover:text-black transition-colors">
-                      (224) 836-3000
-                    </a>
-                  </div>
-                  <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-6 text-center">
-                    <h4 className="font-bold text-white text-lg">{t('whereToFindUsTitle')}</h4>
-                    <p className="text-slate-400 mt-2 text-sm">1303 Dundee Ave, Elgin, IL 60120</p>
-                    <a href="https://www.google.com/maps/dir/?api=1&destination=Queens+Auto+Service+1303+Dundee+Ave,+Elgin,+IL+60120" target="_blank" rel="noopener noreferrer" className="mt-4 inline-block px-6 py-2 border-2 border-white rounded-full text-white font-semibold hover:bg-white hover:text-black transition-colors">
-                      {t('getDirections')}
-                    </a>
-                  </div>
+            <div className="w-full bg-slate-950/50 py-16">
+                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+                    {appointmentDate && appointmentTime && (
+                        <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-6 text-left">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                                <div>
+                                    <p className="text-sm text-slate-400">{t('serviceTitle')}</p>
+                                    <p className="font-semibold text-white">{t('serviceValue')}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-slate-400">{t('dateTimeTitle')}</p>
+                                    <p className="font-semibold text-white">{formattedDate()} at {appointmentTime}</p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-slate-400">{t('locationTitle')}</p>
+                                    <p className="font-semibold text-white">{t('locationValue')}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-6 text-left">
+                        <h3 className="text-xl font-bold text-white mb-4">{t('whatHappensNextTitle')}</h3>
+                        <ol className="list-decimal list-inside space-y-2 text-slate-300">
+                            <li>{t('whatHappensNextStep1')}</li>
+                            <li>{t('whatHappensNextStep2')}</li>
+                            <li>{t('whatHappensNextStep3')}</li>
+                        </ol>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-6 text-center">
+                            <h4 className="font-bold text-white text-lg">{t('needToRescheduleTitle')}</h4>
+                            <p className="text-slate-400 mt-2 text-sm">{t('needToRescheduleBody')}</p>
+                            <a href="tel:2248363000" className="mt-4 inline-block px-6 py-2 border-2 border-white rounded-full text-white font-semibold hover:bg-white hover:text-black transition-colors">
+                                (224) 836-3000
+                            </a>
+                        </div>
+                        <div className="bg-slate-900/50 border border-slate-700/50 rounded-lg p-6 text-center">
+                            <h4 className="font-bold text-white text-lg">{t('whereToFindUsTitle')}</h4>
+                            <p className="text-slate-400 mt-2 text-sm">1303 Dundee Ave, Elgin, IL 60120</p>
+                            <a href="https://www.google.com/maps/dir/?api=1&destination=Queens+Auto+Service+1303+Dundee+Ave,+Elgin,+IL+60120" target="_blank" rel="noopener noreferrer" className="mt-4 inline-block px-6 py-2 border-2 border-white rounded-full text-white font-semibold hover:bg-white hover:text-black transition-colors">
+                                {t('getDirections')}
+                            </a>
+                        </div>
+                    </div>
                 </div>
-              </div>
             </div>
             <footer className="py-6 text-center text-sm text-slate-500">
-              {t('footerCopyright', { year: new Date().getFullYear().toString() })}
+                {t('footerCopyright', { year: new Date().getFullYear().toString() })}
             </footer>
         </div>
     );
@@ -430,9 +430,9 @@ const HeroSection: FC<{ t: TFunction, language: Language }> = ({ t, language }) 
     </section>
 );
 
-const ScaleSection: FC<{t: TFunction, onDetailsClick: () => void}> = ({ t, onDetailsClick }) => {
+const ScaleSection: FC<{ t: TFunction, onDetailsClick: () => void }> = ({ t, onDetailsClick }) => {
     const [cost, setCost] = useState(450);
-    
+
     const calculateSavings = (c: number) => {
         if (c >= 700) return 100;
         if (c >= 500) return 50;
@@ -441,10 +441,10 @@ const ScaleSection: FC<{t: TFunction, onDetailsClick: () => void}> = ({ t, onDet
         if (c >= 100) return 15;
         return 0;
     };
-    
+
     const savings = calculateSavings(cost);
     const finalCost = cost - savings;
-    
+
     const min = 100;
     const max = 1000;
     const progress = ((cost - min) / (max - min)) * 100;
@@ -552,8 +552,8 @@ const TestimonialsSection: FC<{ t: TFunction }> = ({ t }) => {
                         const isLong = review.text.length > 250;
                         const isExpanded = !!expanded[index];
                         return (
-                             <div key={index} className="group relative p-8 rounded-2xl border border-slate-800 bg-slate-900/50 hover:shadow-2xl hover:-translate-y-1 shadow-lg transition-all flex flex-col">
-                                <div className="absolute top-4 left-4 z-0"><svg width="45" height="36" className="fill-current text-cyan-400 opacity-10" viewBox="0 0 45 36"><path d="M13.5 0C6.04 0 0 6.04 0 13.5C0 20.96 6.04 27 13.5 27H18V36H9C4.03 36 0 31.97 0 27V25.65C0 22.77 1.17 20.04 3.26 17.96C5.34 15.87 8.07 14.7 10.95 14.7H13.5C16.8 14.7 19.8 12.15 20.25 8.85C20.25 8.85 20.25 8.55 20.25 8.55C20.25 3.83 16.42 0 11.7 0H13.5ZM40.5 0C33.04 0 27 6.04 27 13.5C27 20.96 33.04 27 40.5 27H45V36H36C31.03 36 27 31.97 27 27V25.65C27 22.77 28.17 20.04 30.26 17.96C32.34 15.87 35.07 14.7 37.95 14.7H40.5C43.8 14.7 46.8 12.15 47.25 8.85C47.25 8.85 47.25 8.55 47.25 8.55C47.25 3.83 43.42 0 38.7 0H40.5Z"/></svg></div>
+                            <div key={index} className="group relative p-8 rounded-2xl border border-slate-800 bg-slate-900/50 hover:shadow-2xl hover:-translate-y-1 shadow-lg transition-all flex flex-col">
+                                <div className="absolute top-4 left-4 z-0"><svg width="45" height="36" className="fill-current text-cyan-400 opacity-10" viewBox="0 0 45 36"><path d="M13.5 0C6.04 0 0 6.04 0 13.5C0 20.96 6.04 27 13.5 27H18V36H9C4.03 36 0 31.97 0 27V25.65C0 22.77 1.17 20.04 3.26 17.96C5.34 15.87 8.07 14.7 10.95 14.7H13.5C16.8 14.7 19.8 12.15 20.25 8.85C20.25 8.85 20.25 8.55 20.25 8.55C20.25 3.83 16.42 0 11.7 0H13.5ZM40.5 0C33.04 0 27 6.04 27 13.5C27 20.96 33.04 27 40.5 27H45V36H36C31.03 36 27 31.97 27 27V25.65C27 22.77 28.17 20.04 30.26 17.96C32.34 15.87 35.07 14.7 37.95 14.7H40.5C43.8 14.7 46.8 12.15 47.25 8.85C47.25 8.85 47.25 8.55 47.25 8.55C47.25 3.83 43.42 0 38.7 0H40.5Z" /></svg></div>
                                 <div className="relative z-10 flex flex-col flex-grow">
                                     <p className={`text-base text-slate-300 leading-relaxed testimonial-text ${isLong && !isExpanded ? 'line-clamp-5' : ''}`}>{review.text}</p>
                                     {isLong && (
@@ -563,7 +563,7 @@ const TestimonialsSection: FC<{ t: TFunction }> = ({ t }) => {
                                     )}
                                 </div>
                                 <div className="relative z-10 flex items-center mt-6 pt-6 border-t border-slate-800">
-                                    <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-white text-lg font-bold mr-4">{review.name.split(" ").map((n)=>n[0]).join("")}</div>
+                                    <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-white text-lg font-bold mr-4">{review.name.split(" ").map((n) => n[0]).join("")}</div>
                                     <div><h4 className="font-semibold text-white">{review.name}</h4><div className="text-yellow-400">★★★★★</div></div>
                                 </div>
                             </div>
@@ -625,7 +625,7 @@ const ServiceAreaSection: FC<{ t: TFunction }> = ({ t }) => (
         <div className="max-w-5xl mx-auto text-center">
             <h2 className="text-4xl font-extrabold text-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{t('serviceAreaTitle')}</h2>
             <p className="mt-4 text-lg text-slate-400">{t('serviceAreaSubtitle')}</p>
-            <div className="mt-12 rounded-2xl overflow-hidden border-4 border-slate-800 shadow-2xl"><img src="https://storage.googleapis.com/queens-videos/Queens-Elgin-map.webp" alt="Map of Queens Auto Service service area in the greater Elgin area" className="w-full"/></div>
+            <div className="mt-12 rounded-2xl overflow-hidden border-4 border-slate-800 shadow-2xl"><img src="https://storage.googleapis.com/queens-videos/Queens-Elgin-map.webp" alt="Map of Queens Auto Service service area in the greater Elgin area" className="w-full" /></div>
             <p className="mt-6 text-sm text-slate-500">{t('serviceAreaList')}</p>
         </div>
     </section>
@@ -640,7 +640,7 @@ const StickyCTA: FC<{ t: TFunction }> = ({ t }) => {
             document.getElementById('book-appointment-form'),
             document.querySelector('footer')
         ].filter(Boolean);
-        
+
         if (sectionsToObserve.length < 4 || !ctaRef.current) return;
 
         const visibilityMap = new Map<Element, boolean>();
@@ -648,7 +648,7 @@ const StickyCTA: FC<{ t: TFunction }> = ({ t }) => {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => visibilityMap.set(entry.target, entry.isIntersecting));
             const shouldShow = Array.from(visibilityMap.values()).every(v => !v);
-            
+
             if (ctaRef.current) {
                 if (shouldShow) {
                     ctaRef.current.classList.remove('opacity-0', 'translate-y-full');
@@ -697,10 +697,10 @@ const DisclaimerModal: FC<{ t: TFunction, isOpen: boolean, onClose: () => void }
 
 const ExitIntentPopup: FC<{ t: TFunction, isOpen: boolean, onClose: () => void }> = ({ t, isOpen, onClose }) => {
     if (!isOpen) return null;
-    
+
     const handleCTAClick = () => {
         onClose();
-        document.getElementById('book-appointment-form')?.scrollIntoView({behavior: 'smooth'});
+        document.getElementById('book-appointment-form')?.scrollIntoView({ behavior: 'smooth' });
     };
 
     return (
@@ -711,7 +711,7 @@ const ExitIntentPopup: FC<{ t: TFunction, isOpen: boolean, onClose: () => void }
                 <p className="text-base sm:text-lg text-slate-300 text-center mb-6">{t('popupSubtitleV2')}</p>
                 <ul className="space-y-3 mb-6 text-slate-300 text-left max-w-md mx-auto">
                     {['popupBonus1', 'popupBonus2', 'popupBonus3', 'popupBonus4', 'popupBonus5'].map(key => (
-                         <li key={key} className="flex items-start gap-3"><span className="text-cyan-400 text-xl flex-shrink-0">✅</span><span>{t(key)}</span></li>
+                        <li key={key} className="flex items-start gap-3"><span className="text-cyan-400 text-xl flex-shrink-0">✅</span><span>{t(key)}</span></li>
                     ))}
                 </ul>
                 <div className="flex justify-center"><button onClick={handleCTAClick} className="inline-flex items-center justify-center px-6 py-3 cta-button text-white font-bold rounded-full shadow-lg">{t('popupCTAV2')}</button></div>
@@ -723,12 +723,12 @@ const ExitIntentPopup: FC<{ t: TFunction, isOpen: boolean, onClose: () => void }
 const InputField: FC<{ name: string, label: string, value: string, onChange: (e: ChangeEvent<HTMLInputElement>) => void, isValid: boolean | null, type?: string, placeholder?: string, autoComplete?: string }> = ({ name, label, value, onChange, isValid, type = 'text', placeholder, autoComplete }) => {
     const wrapperClasses = `input-wrapper ${isValid === true ? 'is-valid' : ''} ${isValid === false ? 'is-invalid' : ''}`;
     const inputClasses = `input-field block w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-md shadow-sm text-white placeholder-slate-400 focus:outline-none focus:ring-2 sm:text-sm ${isValid === true ? 'is-valid' : ''} ${isValid === false ? 'is-invalid' : ''}`;
-    
+
     return (
         <div className={wrapperClasses}>
             <label htmlFor={name} className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
             <div className="relative mt-1">
-                <input type={type} id={name} name={name} required value={value} onChange={onChange} placeholder={placeholder} className={inputClasses} autoComplete={autoComplete}/>
+                <input type={type} id={name} name={name} required value={value} onChange={onChange} placeholder={placeholder} className={inputClasses} autoComplete={autoComplete} />
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                     <svg className="validation-icon icon-valid h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path></svg>
                     <svg className="validation-icon icon-invalid h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"></path></svg>
@@ -780,7 +780,7 @@ const Calendar: FC<{ t: TFunction, currentDate: Date, onDateChange: (date: Date)
             </button>
         );
     }
-    
+
     const prevMonth = () => {
         const prevMonthDate = new Date(year, month - 1, 1);
         const firstOfCurrentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -817,12 +817,12 @@ const TimeSlots: FC<{ t: TFunction, selectedDate: string, selectedTime: string, 
     const availableTimes: string[] = [];
     const now = new Date();
     const selected = new Date(`${selectedDate}T00:00:00`);
-    
+
     const isToday = selected.toDateString() === now.toDateString();
 
     for (let hour = 8; hour < 17; hour++) {
         for (const minute of [0, 30]) {
-             if (hour === 16 && minute > 0) continue; // Last appt at 4:00 PM
+            if (hour === 16 && minute > 0) continue; // Last appt at 4:00 PM
 
             const slotTime = new Date(selected);
             slotTime.setHours(hour, minute);
@@ -840,7 +840,7 @@ const TimeSlots: FC<{ t: TFunction, selectedDate: string, selectedTime: string, 
 
     if (availableTimes.length === 0) {
         return (
-             <div className="mt-8">
+            <div className="mt-8">
                 <h3 className="text-xl font-bold text-white mb-4 text-center">{t('availableTimes')}</h3>
                 <p className="text-center text-slate-400 bg-slate-800/50 p-4 rounded-lg">No more time slots available for today. Please select another date.</p>
             </div>
@@ -867,7 +867,7 @@ const TimeSlots: FC<{ t: TFunction, selectedDate: string, selectedTime: string, 
 };
 
 // Booking Form Component with all logic
-const BookingForm: FC<{t: TFunction}> = ({ t }) => {
+const BookingForm: FC<{ t: TFunction }> = ({ t }) => {
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState<FormData>({
         'first-name': '', 'last-name': '', email: '', 'mobile-number': '',
@@ -898,10 +898,10 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
 
         if (document.referrer && !sessionStorage.getItem('referrer')) {
             if (!document.referrer.includes(window.location.hostname)) {
-                 sessionStorage.setItem('referrer', document.referrer);
+                sessionStorage.setItem('referrer', document.referrer);
             }
         }
-        
+
         const trackingData: { [key: string]: string | undefined } = {};
 
         // 1. Retrieve data from URL params or session storage
@@ -915,14 +915,14 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
         // 2. Retrieve data from cookies as fallbacks
         const gaCookie = getCookie('_ga');
         trackingData.ga_client_id = gaCookie ? gaCookie.split('.').slice(2).join('.') : undefined;
-        
+
         if (!trackingData.gclid) {
             trackingData.gclid = getCookie('_gcl_au') || undefined;
         }
-        
-        trackingData.fbc = getCookie('_fbc') || undefined; 
+
+        trackingData.fbc = getCookie('_fbc') || undefined;
         trackingData.referrer = sessionStorage.getItem('referrer') || undefined;
-        
+
         // 3. Infer missing UTMs from click IDs or referrer for robust tracking
         if (!trackingData.utm_source) {
             if (trackingData.gclid) {
@@ -962,7 +962,7 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
         const definedTrackingData = Object.fromEntries(
             Object.entries(trackingData).filter(([, v]) => v != null && v !== '')
         );
-        
+
         setFormData(prev => ({ ...prev, ...definedTrackingData }));
     }, []);
 
@@ -978,17 +978,17 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
 
     const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({...prev, [name]: value}));
+        setFormData(prev => ({ ...prev, [name]: value }));
         if (validationRules[name]) {
             setValidity(prev => ({ ...prev, [name]: validationRules[name](value) }));
         }
     };
-    
+
     const isStep1Valid = Object.keys(validationRules).every(key => validity[key as keyof FormValidity] === true) && formData['vehicle-year'] !== '';
     const isStep2Valid = formData.date !== '' && formData.time !== '';
 
     const smoothScrollToForm = () => {
-      document.getElementById('form-container-wrapper')?.scrollIntoView({ behavior: 'smooth' });
+        document.getElementById('form-container-wrapper')?.scrollIntoView({ behavior: 'smooth' });
     };
 
     const goToNextStep = () => { setStep(2); smoothScrollToForm(); };
@@ -998,9 +998,11 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
         e.preventDefault();
         if (!isStep2Valid) return;
         setIsSubmitting(true);
-    
-        const formattedPhone = `+1${(formData['mobile-number'] || '').replace(/\D/g, '')}`;
-    
+
+        const rawPhone = (formData['mobile-number'] || '').replace(/\D/g, '');
+        const formattedPhone = (rawPhone.length === 11 && rawPhone.startsWith('1')) ? `+${rawPhone}` : `+1${rawPhone}`;
+
+
         // 1. GTM Payload (as requested by user)
         const dataLayerPayload = {
             event: 'generate_lead',
@@ -1021,11 +1023,11 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
         };
         window.dataLayer = window.dataLayer || [];
         window.dataLayer.push(dataLayerPayload);
-    
+
         // 2. Webhook Payload (updated to be consistent)
         const uniqueEventId = window.dataLayer?.find((item: any) => item.uniqueEventId)?.uniqueEventId || `gen_${Date.now()}`;
         const lang = localStorage.getItem('preferredLanguage') || 'en';
-        
+
         const webhookPayload = {
             "First Name": formData['first-name'],
             "Last Name": formData['last-name'],
@@ -1054,14 +1056,14 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
             "Event ID": uniqueEventId,
             "Lead Type": "generate_lead"
         };
-    
+
         try {
             const response = await fetch('https://n8n.queensautoservices.com/webhook/5be99bf2-b19b-49f7-82b3-431fb1748b27', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(webhookPayload),
             });
-    
+
             if (response.ok) {
                 const responseData = await response.json();
                 if (responseData?.audioUrl) sessionStorage.setItem('customAudioUrl', responseData.audioUrl);
@@ -1074,27 +1076,27 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
         } finally {
             // 3. Thank You URL params (must be flat to not break thank you page)
             const thankYouUrl = new URL(window.location.origin + '/auto-repair/thank-you-coupon.htm');
-            
+
             const validUrlParams = Object.fromEntries(
                 Object.entries(formData).filter(([, v]) => v)
             );
-    
+
             for (const key in validUrlParams) {
                 thankYouUrl.searchParams.append(key, validUrlParams[key] as string);
             }
-            
+
             // Explicitly set params expected by Thank You page to ensure compatibility
             thankYouUrl.searchParams.set('carYear', formData['vehicle-year']);
             thankYouUrl.searchParams.set('carMake', formData['vehicle-make']);
             thankYouUrl.searchParams.set('carModel', formData['vehicle-model']);
             thankYouUrl.searchParams.set('first_name', formData['first-name']);
-            
+
             window.location.href = thankYouUrl.toString();
         }
     };
 
     const currentYear = new Date().getFullYear() + 1;
-    const yearOptions = Array.from({length: currentYear - 1989}, (_, i) => currentYear - i);
+    const yearOptions = Array.from({ length: currentYear - 1989 }, (_, i) => currentYear - i);
 
     return (
         <section id="book-appointment-form" className="py-24 px-4">
@@ -1110,9 +1112,9 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
                                 <div className="space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <InputField name="first-name" label={t('firstName')} value={formData['first-name']} onChange={handleInputChange} isValid={validity['first-name']} placeholder="Enter first name" autoComplete="given-name" />
-                                        <InputField name="last-name" label={t('lastName')} value={formData['last-name']} onChange={handleInputChange} isValid={validity['last-name']} placeholder="Enter last name" autoComplete="family-name"/>
-                                        <InputField name="email" label={t('email')} type="email" value={formData.email} onChange={handleInputChange} isValid={validity.email} placeholder="you@example.com" autoComplete="email"/>
-                                        <InputField name="mobile-number" label={t('mobileNumber')} type="tel" value={formData['mobile-number']} onChange={handleInputChange} isValid={validity['mobile-number']} placeholder="(###) ###-####" autoComplete="tel"/>
+                                        <InputField name="last-name" label={t('lastName')} value={formData['last-name']} onChange={handleInputChange} isValid={validity['last-name']} placeholder="Enter last name" autoComplete="family-name" />
+                                        <InputField name="email" label={t('email')} type="email" value={formData.email} onChange={handleInputChange} isValid={validity.email} placeholder="you@example.com" autoComplete="email" />
+                                        <InputField name="mobile-number" label={t('mobileNumber')} type="tel" value={formData['mobile-number']} onChange={handleInputChange} isValid={validity['mobile-number']} placeholder="(###) ###-####" autoComplete="tel" />
                                     </div>
                                     <div className="pt-2">
                                         <h3 className="text-xl font-bold text-white mb-4">{t('vehicleDetails')}</h3>
@@ -1136,7 +1138,7 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
                             </div>
                         )}
                         {step === 2 && (
-                             <div>
+                            <div>
                                 <div className="space-y-8">
                                     <Calendar
                                         t={t}
@@ -1145,7 +1147,7 @@ const BookingForm: FC<{t: TFunction}> = ({ t }) => {
                                         selectedDate={formData.date}
                                         onDateSelect={(date) => setFormData(p => ({ ...p, date, time: '' }))}
                                     />
-                                    {formData.date && <TimeSlots t={t} selectedDate={formData.date} selectedTime={formData.time} onTimeSelect={time => setFormData(p => ({...p, time}))}/> }
+                                    {formData.date && <TimeSlots t={t} selectedDate={formData.date} selectedTime={formData.time} onTimeSelect={time => setFormData(p => ({ ...p, time }))} />}
                                 </div>
                                 <div className="mt-8 text-center">
                                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
