@@ -1000,7 +1000,7 @@ const BookingForm: FC<{ t: TFunction }> = ({ t }) => {
         setIsSubmitting(true);
 
         const rawPhone = (formData['mobile-number'] || '').replace(/\D/g, '');
-        const formattedPhone = (rawPhone.length === 11 && rawPhone.startsWith('1')) ? `+${rawPhone}` : `+1${rawPhone}`;
+        const formattedPhone = rawPhone.startsWith('1') ? `+${rawPhone}` : `+1${rawPhone}`;
 
 
         // 1. GTM Payload (as requested by user)
