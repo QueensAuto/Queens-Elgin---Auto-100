@@ -1,61 +1,73 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-W56FDLTF');</script>
+    <script>(function (w, d, s, l, i) {
+            w[l] = w[l] || []; w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            }); var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+                    'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-W56FDLTF');</script>
     <!-- End Google Tag Manager -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Queens Auto Service — Instant Auto Repair Savings</title>
-    
+
     <link rel="icon" href="/images/Favicon.png" type="image/png">
-    
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&display=swap"
+        rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
+
     <!-- Scripts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://fast.wistia.com/player.js" async></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
-    
+
     <style>
         html {
             scroll-behavior: smooth;
         }
+
         body {
             font-family: 'Inter', sans-serif;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
+
         .cta-button {
             background: linear-gradient(to right, #22d3ee, #3b82f6 60%);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
+
         .cta-button:hover:not(:disabled) {
             transform: translateY(-3px);
             box-shadow: 0 10px 20px -5px rgba(34, 197, 222, 0.3);
         }
-        details > summary {
+
+        details>summary {
             list-style: none;
         }
-        details > summary::-webkit-details-marker {
+
+        details>summary::-webkit-details-marker {
             display: none;
         }
+
         .faq-icon {
             transition: transform 0.3s ease;
         }
+
         details[open] .faq-icon {
             transform: rotate(180deg);
         }
+
         .calendar-day {
             width: 2.5rem;
             height: 2.5rem;
@@ -73,84 +85,215 @@
             font-family: inherit;
             color: inherit;
         }
+
         .calendar-day:hover:not(:disabled):not(.selected) {
             background-color: #334155;
         }
+
         .calendar-day.selected {
             background-color: #22d3ee;
             color: white;
             font-weight: bold;
         }
+
         .calendar-day.today {
             background-color: rgba(37, 99, 235, 0.3);
         }
+
         .calendar-day.disabled {
             color: #475569;
             cursor: not-allowed;
         }
+
         .time-slot.selected {
             background-color: #22d3ee;
             color: white;
             border-color: #22d3ee;
         }
-        wistia-player[media-id='nkhoqvoaev']:not(:defined) { background: center / contain no-repeat url('https://fast.wistia.com/embed/medias/nkhoqvoaev/swatch'); display: block; filter: blur(5px); padding-top:56.25%; }
-        wistia-player[media-id='3fr9tu4fz9']:not(:defined) { background: center / contain no-repeat url('https://fast.wistia.com/embed/medias/3fr9tu4fz9/swatch'); display: block; filter: blur(5px); padding-top:56.25%; }
+
+        wistia-player[media-id='nkhoqvoaev']:not(:defined) {
+            background: center / contain no-repeat url('https://fast.wistia.com/embed/medias/nkhoqvoaev/swatch');
+            display: block;
+            filter: blur(5px);
+            padding-top: 56.25%;
+        }
+
+        wistia-player[media-id='3fr9tu4fz9']:not(:defined) {
+            background: center / contain no-repeat url('https://fast.wistia.com/embed/medias/3fr9tu4fz9/swatch');
+            display: block;
+            filter: blur(5px);
+            padding-top: 56.25%;
+        }
+
         @keyframes blob-anim {
-          0% { transform: scale(1) translate(0px, 0px); }
-          100% { transform: scale(1.2) translate(20px, -30px); }
+            0% {
+                transform: scale(1) translate(0px, 0px);
+            }
+
+            100% {
+                transform: scale(1.2) translate(20px, -30px);
+            }
         }
 
         .bonus-card .icon-wrapper {
-            background-color: #1e293b; /* slate-800 */
+            background-color: #1e293b;
+            /* slate-800 */
             transition: background-color 0.5s ease-in-out;
         }
+
         .bonus-card .icon-wrapper i {
-            color: #94a3b8; /* slate-400 */
+            color: #94a3b8;
+            /* slate-400 */
             transition: color 0.5s ease-in-out, transform 0.3s ease;
             transform: scale(1);
         }
+
         .bonus-card:hover .icon-wrapper i {
-           color: #22d3ee; /* cyan-400 */
-           transform: scale(1.1);
+            color: #22d3ee;
+            /* cyan-400 */
+            transform: scale(1.1);
         }
-        
-        .input-wrapper .validation-icon { display: none; }
-        .input-wrapper.is-valid .icon-valid { display: block; color: #22c55e; }
-        .input-wrapper.is-invalid .icon-invalid { display: block; color: #ef4444; }
-        .input-field.is-valid { border-color: #22c55e !important; padding-right: 2.5rem !important; }
-        .input-field.is-invalid { border-color: #ef4444 !important; padding-right: 2.5rem !important; }
-        .input-field { transition: padding-right 0.2s ease-in-out, border-color 0.2s ease-in-out; }
-        .input-field.is-valid:focus { --tw-ring-color: #22c55e; }
-        .input-field.is-invalid:focus { --tw-ring-color: #ef4444; }
 
-        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
-        input[type=range]:focus { outline: none; }
-        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 8px; cursor: pointer; background: linear-gradient(to right, #3b82f6 var(--progress, 0%), #1e293b var(--progress, 0%)); border-radius: 5px; border: 1px solid #334155; }
-        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 28px; width: 28px; border-radius: 50%; background: white; cursor: pointer; margin-top: -11px; border: 4px solid #3b82f6; box-shadow: 0 0 10px #3b82f6; transition: transform .2s ease, box-shadow .2s ease; }
-        input[type=range]:active::-webkit-slider-thumb { transform: scale(1.1); box-shadow: 0 0 15px #60a5fa; }
-        input[type=range]::-moz-range-track { width: 100%; height: 8px; cursor: pointer; background: linear-gradient(to right, #3b82f6 var(--progress, 0%), #1e293b var(--progress, 0%)); border-radius: 5px; border: 1px solid #334155; }
-        input[type=range]::-moz-range-thumb { height: 20px; width: 20px; border-radius: 50%; background: white; cursor: pointer; border: 4px solid #3b82f6; box-shadow: 0 0 10px #3b82f6; transition: transform .2s ease, box-shadow .2s ease; }
-        input[type=range]:active::-moz-range-thumb { transform: scale(1.1); box-shadow: 0 0 15px #60a5fa; }
+        .input-wrapper .validation-icon {
+            display: none;
+        }
 
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #1e293b; }
-        ::-webkit-scrollbar-thumb { background-color: #3b82f6; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background-color: #60a5fa; }
+        .input-wrapper.is-valid .icon-valid {
+            display: block;
+            color: #22c55e;
+        }
+
+        .input-wrapper.is-invalid .icon-invalid {
+            display: block;
+            color: #ef4444;
+        }
+
+        .input-field.is-valid {
+            border-color: #22c55e !important;
+            padding-right: 2.5rem !important;
+        }
+
+        .input-field.is-invalid {
+            border-color: #ef4444 !important;
+            padding-right: 2.5rem !important;
+        }
+
+        .input-field {
+            transition: padding-right 0.2s ease-in-out, border-color 0.2s ease-in-out;
+        }
+
+        .input-field.is-valid:focus {
+            --tw-ring-color: #22c55e;
+        }
+
+        .input-field.is-invalid:focus {
+            --tw-ring-color: #ef4444;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]:focus {
+            outline: none;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: linear-gradient(to right, #3b82f6 var(--progress, 0%), #1e293b var(--progress, 0%));
+            border-radius: 5px;
+            border: 1px solid #334155;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 28px;
+            width: 28px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            margin-top: -11px;
+            border: 4px solid #3b82f6;
+            box-shadow: 0 0 10px #3b82f6;
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+
+        input[type=range]:active::-webkit-slider-thumb {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px #60a5fa;
+        }
+
+        input[type=range]::-moz-range-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: linear-gradient(to right, #3b82f6 var(--progress, 0%), #1e293b var(--progress, 0%));
+            border-radius: 5px;
+            border: 1px solid #334155;
+        }
+
+        input[type=range]::-moz-range-thumb {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: 4px solid #3b82f6;
+            box-shadow: 0 0 10px #3b82f6;
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+
+        input[type=range]:active::-moz-range-thumb {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px #60a5fa;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background-color: #3b82f6;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background-color: #60a5fa;
+        }
 
         .animated-gradient-border {
             background: linear-gradient(90deg, #3b82f6, #a855f7, #ec4899, #22d3ee, #3b82f6);
             background-size: 200% 200%;
             animation: gradient-slide 3s linear infinite;
-            border-radius: 1.1rem; /* 18px */
+            border-radius: 1.1rem;
+            /* 18px */
         }
 
         @keyframes gradient-slide {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
         }
     </style>
-<script type="importmap">
+    <script type="importmap">
 {
   "imports": {
     "react/": "https://esm.sh/react@18.2.0/",
@@ -161,12 +304,14 @@
 }
 </script>
 </head>
+
 <body class="bg-gradient-to-br from-black to-slate-950 text-gray-200 selection:bg-blue-500/20 selection:text-blue-300">
     <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W56FDLTF"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-W56FDLTF" height="0" width="0"
+            style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
     <div id="root"></div>
     <script type="module" src="/index.js"></script>
 </body>
+
 </html>
